@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 150" role="img" aria-labelledby="title desc">
+<title id="title">LuxeStay</title><desc id="desc">LuxeStay hotel wordmark</desc>
+<g fill="none" stroke="#C8A96B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M36 111h91M45 111V55l36-25 37 25v56M58 111V67h46v44M71 111V84h20v27M51 49h61"/>
+<path d="M74 52h14" opacity=".7"/>
+</g>
+<text x="154" y="88" fill="#061021" font-family="Georgia, 'Times New Roman', serif" font-size="58" letter-spacing="-1">LuxeStay</text>
+<text x="158" y="116" fill="#866F45" font-family="Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="6">HOTELS &amp; STAYS</text>
+</svg>

@@ -1,0 +1,21 @@
+const router = require('express').Router();
+const avatarUpload = require('../middleware/user.avatar.upload');
+const { apiLimiter } = require('../middleware/access.limiter');
+const { isAuthenticatedUser, isRefreshTokenValid, isBlocked } = require('../middleware/app.authentication');
+const auth = require('../controllers/auth.controllers');
+
+router.post('/auth/registration', avatarUpload.single('avatar'), auth.register);
+router.post('/auth/login', apiLimiter, avatarUpload.none(), auth.loginUser);
+router.post('/auth/login/verify-email', auth.verifyLoginEmail);
+router.post('/auth/login/resend-code', auth.resendLoginVerificationCode);
+router.post('/auth/logout', isAuthenticatedUser, isBlocked, auth.logoutUser);
+router.post('/auth/forgot-password', auth.forgotPassword);
+router.post('/auth/reset-password/:token', auth.resetPassword);
+router.post('/auth/change-password', isAuthenticatedUser, isBlocked, auth.requestPasswordChange);
+router.post('/auth/change-password/verify', isAuthenticatedUser, isBlocked, auth.verifyPasswordChange);
+router.post('/auth/change-email', isAuthenticatedUser, isBlocked, auth.requestEmailChange);
+router.post('/auth/change-email/verify', isAuthenticatedUser, isBlocked, auth.verifyEmailChange);
+router.post('/auth/send-email-verification-link', isAuthenticatedUser, isBlocked, auth.sendEmailVerificationLink);
+router.post('/auth/verify-email/:token', isAuthenticatedUser, isBlocked, auth.emailVerification);
+router.get('/auth/refresh-token', isRefreshTokenValid, auth.refreshToken);
+module.exports = router;
