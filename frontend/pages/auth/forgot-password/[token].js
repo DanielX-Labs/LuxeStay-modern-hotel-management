@@ -14,22 +14,23 @@ function ResetPassword() {
   const [form] = Form.useForm();
   const router = useRouter();
 
-  const onFinish = (values) => {
-    ApiService.post(`/api/v1/auth/reset-password/${router.query.token}`, values)
-      .then((response) => {
-        setLoading(false);
-        if (response?.result_code === 0) {
-          notificationWithIcon('success', 'SUCCESS', response?.result?.message || 'Your password reset successful');
-          form.resetFields();
-          router.push('/auth/login');
-        } else {
-          notificationWithIcon('error', 'ERROR', 'Sorry! Something went wrong. App server error');
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        notificationWithIcon('error', 'ERROR', err?.response?.data?.result?.error?.message || err?.response?.data?.result?.error || 'Sorry! Something went wrong. App server error');
-      });
+  const onFinish = async (values) => {
+    if (!router.isReady || !router.query.token) {
+      notificationWithIcon('error', 'INVALID RESET LINK', 'The password-reset token is missing. Request a new link.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await ApiService.post(`/api/v1/auth/reset-password/${encodeURIComponent(router.query.token)}`, values, { noAuth: true });
+      notificationWithIcon('success', 'PASSWORD RESET', response?.result?.message || 'Your password was reset successfully.');
+      form.resetFields();
+      await router.push('/auth/login');
+    } catch (err) {
+      notificationWithIcon('error', 'RESET FAILED', err?.response?.data?.result?.error?.message || err?.response?.data?.result?.error || 'The reset link is invalid or expired.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,10 +47,7 @@ function ResetPassword() {
           >
             <Form.Item
               name='password'
-              rules={[{
-                required: true,
-                message: 'Please input your Password!'
-              }]}
+              rules={[{ required: true, min: 6, message: 'Use at least 6 characters.' }]}
             >
               <Input.Password
                 prefix={<LockOutlined className='site-form-item-icon' />}
@@ -61,10 +59,17 @@ function ResetPassword() {
 
             <Form.Item
               name='confirmPassword'
-              rules={[{
-                required: true,
-                message: 'Please input your Confirm Password!'
-              }]}
+              dependencies={['password']}
+              rules={[
+                { required: true, message: 'Confirm your new password.' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    return !value || getFieldValue('password') === value
+                      ? Promise.resolve()
+                      : Promise.reject(new Error('Passwords do not match.'));
+                  }
+                })
+              ]}
             >
               <Input.Password
                 prefix={<LockOutlined className='site-form-item-icon' />}
@@ -82,7 +87,7 @@ function ResetPassword() {
                 size='large'
                 block
                 loading={loading}
-                disabled={loading}
+                disabled={loading || !router.isReady || !router.query.token}
               >
                 Reset Password
               </Button>

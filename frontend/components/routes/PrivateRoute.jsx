@@ -11,12 +11,12 @@ function PrivateRoute({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user && !token) {
-      router.push('/auth/login');
+    if (!user || !token) {
+      router.replace('/auth/login');
     } else {
       setLoading(false);
     }
-  }, [user, token]);
+  }, [user, token, router]);
 
   return loading ? <Loading /> : children;
 }

@@ -14,7 +14,11 @@ function Login() {
   const [maskedEmail, setMaskedEmail] = useState('');
   const [code, setCode] = useState('');
   const [form] = Form.useForm();
-  const finishLogin = (response) => { setSessionUserAndToken(response?.result?.data, response?.access_token, response?.refresh_token); window.location.href = '/profile?tab=my-profile'; };
+  const finishLogin = (response) => {
+    const remember = Boolean(form.getFieldValue('remember'));
+    setSessionUserAndToken(response?.result?.data, response?.access_token, response?.refresh_token, remember);
+    window.location.assign('/profile?tab=my-profile');
+  };
   const onFinish = async (values) => {
     setLoading(true);
     try { finishLogin(await ApiService.post('/api/v1/auth/login', values)); }

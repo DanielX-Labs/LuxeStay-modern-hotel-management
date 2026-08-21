@@ -14,22 +14,18 @@ function ForgotPassword() {
   const [form] = Form.useForm();
   const router = useRouter();
 
-  const onFinish = (values) => {
-    ApiService.post('/api/v1/auth/forgot-password', values)
-      .then((response) => {
-        setLoading(false);
-        if (response?.result_code === 0) {
-          notificationWithIcon('success', 'SUCCESS', response?.result?.message || 'Your password reset mail send successful');
-          form.resetFields();
-          router.push('/auth/login');
-        } else {
-          notificationWithIcon('error', 'ERROR', 'Sorry! Something went wrong. App server error');
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        notificationWithIcon('error', 'ERROR', err?.response?.data?.result?.error?.message || err?.response?.data?.result?.error || 'Sorry! Something went wrong. App server error');
-      });
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      const response = await ApiService.post('/api/v1/auth/forgot-password', values, { noAuth: true });
+      notificationWithIcon('success', 'RESET EMAIL SENT', response?.result?.message || 'Check your email for a password-reset link.');
+      form.resetFields();
+      await router.push('/auth/login');
+    } catch (err) {
+      notificationWithIcon('error', 'UNABLE TO RESET PASSWORD', err?.response?.data?.result?.error?.message || err?.response?.data?.result?.error || 'Unable to send the password-reset email.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,7 +64,7 @@ function ForgotPassword() {
                 loading={loading}
                 disabled={loading}
               >
-                Forgot Password
+                Send Reset Link
               </Button>
             </Form.Item>
 

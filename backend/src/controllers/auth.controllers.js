@@ -14,6 +14,7 @@ const deleteAvatarFile = async (file) => {
   if (file?.filename) await cloudinary.uploader.destroy(file.filename).catch((error) => logger.error(`Avatar cleanup failed: ${error.message}`));
 };
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+const clientOrigin = () => String(process.env.CLIENT_URL || '').split(',')[0].trim().replace(/\/$/, '');
 const verificationTokenFor = (user) => jwt.sign(
   { id: user._id, purpose: 'email_verification' },
   process.env.JWT_ACCESS_SECRET,
@@ -193,21 +194,37 @@ exports.logoutUser = async (req, res) => {
 };
 exports.forgotPassword = async (req, res) => {
   try {
-    const user = await User.findOne({ email: normalizeEmail(req.body.email) });
+    const email = normalizeEmail(req.body.email);
+    if (!email) return res.status(400).json(errorResponse(1, 'FAILED', 'Email is required'));
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json(errorResponse(4, 'UNKNOWN ACCESS', 'User does not exist'));
     const token = user.getResetPasswordToken();
     await user.save({ validateBeforeSave: false });
-    return sendEmail(res, user, `${process.env.CLIENT_URL}/auth/forgot-password/${token}`, 'Password Recovery Email', 'Click the button to reset your password', 'Recover Your Password');
+    return sendEmail(res, user, `${clientOrigin()}/auth/forgot-password/${token}`, 'Password Recovery Email', 'Click the button to reset your password', 'Recover Your Password');
   } catch (error) { return res.status(500).json(errorResponse(2, 'SERVER SIDE ERROR', error.message)); }
 };
 exports.resetPassword = async (req, res) => {
-  const { password, confirmPassword } = req.body;
-  if (!password || password !== confirmPassword) return res.status(400).json(errorResponse(1, 'FAILED', 'Passwords do not match'));
-  const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  const user = await User.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
-  if (!user) return res.status(400).json(errorResponse(1, 'FAILED', 'Reset link is invalid or expired'));
-  user.password = password; user.resetPasswordToken = undefined; user.resetPasswordExpire = undefined; await user.save();
-  return res.status(200).json(successResponse(0, 'SUCCESS', 'Password reset successfully'));
+  try {
+    const { password, confirmPassword } = req.body;
+    if (!password || password.length < 6 || password !== confirmPassword) {
+      return res.status(400).json(errorResponse(1, 'FAILED', 'Passwords must match and contain at least 6 characters'));
+    }
+
+    const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
+    if (!user) return res.status(400).json(errorResponse(1, 'FAILED', 'Reset link is invalid or expired'));
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    user.status = 'logout';
+    user.updatedAt = new Date();
+    await user.save();
+    return res.status(200).json(successResponse(0, 'SUCCESS', 'Password reset successfully. Sign in with your new password.'));
+  } catch (error) {
+    logger.error(`Reset password error: ${error.message}`);
+    return res.status(500).json(errorResponse(2, 'SERVER SIDE ERROR', 'Unable to reset password'));
+  }
 };
 exports.changePassword = exports.requestPasswordChange;
 exports.sendEmailVerificationLink = async (req, res) => {
