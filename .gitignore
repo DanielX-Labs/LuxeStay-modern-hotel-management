@@ -1,70 +1,110 @@
-# Dependencies
+# Dependencies and package-manager state
 **/node_modules/
 **/.pnp/
-**/.pnp.js
+**/.pnp.*
+**/.yarn/cache/
+**/.yarn/install-state.gz
 
-# Environment variables and secrets
+# Secrets and local environment overrides
 .env
 .env.*
 **/.env
 **/.env.*
 !.env.example
 !**/.env.example
+*.local
 
-# Build and release folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# Next.js, Node.js, and compiled output
 **/.next/
 **/out/
 **/build/
 **/dist/
-**/.vercel/
-
-# Test and tooling output
-**/coverage/
-**/.cache/
 **/.turbo/
+**/.cache/
+**/.parcel-cache/
+**/.swc/
 *.tsbuildinfo
+next-env.d.ts
 
-# Logs and audit output
+# Deployment-provider state
+**/.vercel/
+**/.netlify/
+**/.render/
+
+# Tests, coverage, and reports
+**/coverage/
+**/.nyc_output/
+**/test-results/
+**/playwright-report/
+**/blob-report/
+**/junit.xml
+audit.json
+
+# Logs, process files, and diagnostics
 **/logs/
 *.log
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-audit.json
+lerna-debug.log*
+*.pid
+*.pid.lock
+*.seed
 
-# Runtime uploads and temporary files
+# Runtime uploads, database dumps, and temporary files
 backend/public/uploads/
+**/uploads/tmp/
 **/tmp/
 **/temp/
+**/dumps/
+**/backups/
+*.bson
+*.archive
+*.dump
 *.tmp
+*.temp
 
-# IDE, editor, and operating-system files
-.settings/
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-Desktop.ini
-*.swp
-*.swo
-
-# Certificates and keys
+# Credentials, certificates, and private keys
 *.pem
 *.key
 *.p12
 *.pfx
+*.jks
+*.keystore
+*.crt
+*.cer
+*.csr
+service-account*.json
+credentials*.json
 
-# Executables and mobile packages
-*.swf
-*.air
-*.ipa
+# IDE, editor, and operating-system files
+.vscode/
+.idea/
+.fleet/
+.settings/
+*.code-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Archives and packaged applications
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
 *.apk
-
-# Eclipse and Flash Builder project files such as .project,
-# .actionScriptProperties, and .flexProperties remain tracked because
-# they may contain required compiler settings.
+*.ipa
+*.air
+*.swf

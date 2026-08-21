@@ -24,6 +24,10 @@ const reviewRoute = require('../routes/review.routes');
 // initialize express app
 const app = express();
 
+// Render terminates TLS at its proxy. Trust one proxy hop so secure request
+// metadata and IP-based rate limiting use the original client request.
+app.set('trust proxy', 1);
+
 // Apply security and CORS headers before rate limiting or database work.
 app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
@@ -72,7 +76,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // response default and health-check routes
 app.get('/', defaultController);
-app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }));
+app.get('/health', (_req, res) => res.status(200).json({
+  status: 'ok',
+  service: 'luxestay-api',
+  uptime: Math.floor(process.uptime())
+}));
 
 // sets application API's routes
 app.use('/api/v1', authRoute); // auth routes
@@ -90,7 +98,6 @@ app.use(errorHandler);
 
 // default export ~ app
 module.exports = app;
-
 
 
 

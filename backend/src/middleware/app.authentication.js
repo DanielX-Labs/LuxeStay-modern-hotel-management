@@ -169,7 +169,7 @@ exports.isBlocked = async (req, res, next) => {
     }
 
     // check user status is blocked
-    if (user.role !== 'blocked') {
+    if (user.status !== 'blocked') {
       next();
     } else {
       return res.status(406).json(errorResponse(

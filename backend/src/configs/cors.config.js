@@ -4,7 +4,11 @@ const localOrigins = [
   'http://localhost:3000'
 ];
 
-const productionOrigins = [process.env.CLIENT_URL, process.env.ADMIN_URL].filter(Boolean);
+const parseOrigins = (value = '') => value.split(',').map((origin) => origin.trim()).filter(Boolean);
+const productionOrigins = [
+  ...parseOrigins(process.env.CLIENT_URL),
+  ...parseOrigins(process.env.ADMIN_URL)
+];
 const allowedOrigins = new Set(
   (process.env.NODE_ENV === 'production' ? productionOrigins : [...localOrigins, ...productionOrigins])
     .map((origin) => origin.replace(/\/$/, ''))
