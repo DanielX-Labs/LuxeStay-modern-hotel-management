@@ -22,7 +22,7 @@ function MyProfile() {
   const props = {
     accept: 'image/*',
     name: 'avatar',
-    action: `${import.meta.env.VITE_API_URL}/api/v1/avatar-update`,
+    action: `${process.env.NEXT_PUBLIC_API_URL}/api/v1/avatar-update`,
     method: 'put',
     headers: { authorization: `Bearer ${token}` },
     onChange(info) {

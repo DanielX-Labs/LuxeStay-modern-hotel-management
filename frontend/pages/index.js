@@ -1,5 +1,4 @@
 import { Empty, Result, Skeleton } from 'antd';
-import axios from 'axios';
 import Link from 'next/link';
 import React from 'react';
 import FeaturedRooms from '../components/home/FeaturedRooms';
@@ -7,10 +6,11 @@ import Hero from '../components/home/Hero';
 import Services from '../components/home/Services';
 import ResortTestimonials from '../components/home/ResortTestimonials';
 import MainLayout from '../components/layout';
+import useLiveRoomData, { fetchRoomData } from '../hooks/useLiveRoomData';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-function Home({ featuredRooms, error }) {
+function Home({ featuredRooms: initialRooms, error: initialError }) {
+  const { data: featuredRooms, error: refreshError } = useLiveRoomData(initialRooms, '/api/v1/featured-rooms-list');
+  const error = featuredRooms ? null : refreshError || initialError;
   return (
     <MainLayout title='LuxeStay - Luxury, made personal'>
       <div className='ls-home'>
@@ -42,10 +42,10 @@ function Home({ featuredRooms, error }) {
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ res }) {
+  res.setHeader('Cache-Control', 'no-store');
   try {
-    const response = await axios.get(`${API_URL}/api/v1/featured-rooms-list`);
-    return { props: { featuredRooms: response?.data?.result || null, error: null } };
+    return { props: { featuredRooms: await fetchRoomData('/api/v1/featured-rooms-list'), error: null } };
   } catch (err) {
     return { props: { featuredRooms: null, error: { message: err?.response?.data?.result?.error || err?.message || 'Failed to fetch featured rooms' } } };
   }

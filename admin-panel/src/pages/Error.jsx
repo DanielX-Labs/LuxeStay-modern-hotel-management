@@ -1,6 +1,6 @@
 import { Button, Result } from 'antd';
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 function NotFound() {
   window.document.title = 'LuxeStay — Error';
@@ -13,7 +13,7 @@ function NotFound() {
         title='404 - Error Page!'
         subTitle='Sorry, the page you visited does not exist.'
         extra={(
-          <Link to='/'>
+          <Link href='/'>
             <Button
               type='primary'
               shape='round'

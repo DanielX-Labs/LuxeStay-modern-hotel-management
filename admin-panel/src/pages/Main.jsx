@@ -5,7 +5,8 @@ import {
   Button, Layout, Menu, Tooltip
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import UserBox from '../components/shared/UserBox';
 import Dashboard from '../components/tabs/Dashboard';
 import MyProfile from '../components/tabs/MyProfile';
@@ -25,8 +26,8 @@ function Main() {
   window.document.title = 'LuxeStay - Main';
   const { isFullscreen, toggleFullScreen } = useFullScreen();
   const [selectedKeys, setSelectedKeys] = useState('1');
-  const navigate = useNavigate();
-  const { tab } = useParams();
+  const router = useRouter();
+  const { tab } = router.query;
 
   // function to handle user logout
   const userLogout = async () => {
@@ -47,23 +48,23 @@ function Main() {
   const handleTabChange = (key) => {
     switch (key) {
       case '1': {
-        navigate('/main/dashboard');
+        router.push('/main/dashboard');
         break;
       }
       case '2': {
-        navigate('/main/users');
+        router.push('/main/users');
         break;
       }
       case '3': {
-        navigate('/main/hotel-rooms');
+        router.push('/main/hotel-rooms');
         break;
       }
       case '4': {
-        navigate('/main/booking-orders');
+        router.push('/main/booking-orders');
         break;
       }
       case '5': {
-        navigate('/main/profile');
+        router.push('/main/profile');
         break;
       }
       case '6': {
@@ -71,7 +72,7 @@ function Main() {
         break;
       }
       default: {
-        navigate('/main/dashboard');
+        router.push('/main/dashboard');
       }
     }
   };
@@ -104,11 +105,11 @@ function Main() {
           break;
         }
         default: {
-          navigate('/not-found');
+          router.replace('/404');
         }
       }
     }
-  }, [tab, navigate]);
+  }, [tab, router]);
 
   useEffect(() => {
     switch (selectedKeys) {
@@ -191,7 +192,7 @@ function Main() {
 
       <Layout>
         <Header className='p-0 !bg-bg-white'>
-          <Link to='/'>
+          <Link href='/'>
             <img
               className='w-[220px] h-[65px] object-contain mx-auto'
               alt='LuxeStay logo'

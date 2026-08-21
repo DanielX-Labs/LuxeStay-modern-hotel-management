@@ -11,7 +11,7 @@ import {
 import { Button, Progress, Result, Skeleton, Tag } from 'antd';
 import React from 'react';
 import CountUp from 'react-countup';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import useFetchData from '../../hooks/useFetchData';
 
 const percent = (value, total) => (total ? Math.round((value / total) * 100) : 0);
@@ -51,7 +51,8 @@ function StatusRow({ color, label, value, total }) {
 }
 
 function Dashboard() {
-  const navigate = useNavigate();
+  const router = useRouter();
+  const navigate = (url) => router.push(url);
   const [loading, error, response] = useFetchData('/api/v1/dashboard');
   const users = response?.data?.users_info || {};
   const rooms = response?.data?.rooms_info || {};
@@ -70,7 +71,7 @@ function Dashboard() {
         <section className='mb-7 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 px-6 py-7 text-white shadow-xl sm:px-8 sm:py-9'>
           <div className='flex flex-col justify-between gap-6 md:flex-row md:items-end'>
             <div>
-              <Tag className='!m-0 !border-white/20 !bg-white/15 !px-3 !py-1 !text-white'>LIVE OVERVIEW</Tag>
+              <Tag className='!m-0 !border-white/20 !bg-white/15 !px-3 !py-1 !text-black'>LIVE OVERVIEW</Tag>
               <h1 className='mb-2 mt-4 text-2xl font-bold tracking-tight text-white sm:text-3xl'>Good to see you.</h1>
               <p className='m-0 max-w-xl text-sm leading-6 text-blue-50 sm:text-base'>Your LuxeStay operation at a glance. Guests, rooms, and reservations in one calm view.</p>
             </div>
@@ -111,8 +112,8 @@ function Dashboard() {
           <div className='rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6'>
             <div className='mb-5'><h2 className='m-0 text-lg font-bold text-slate-900'>Property health</h2><p className='mb-0 mt-1 text-sm text-slate-500'>Operational readiness today</p></div>
             <div className='space-y-6'>
-              <div><div className='mb-2 flex justify-between text-sm'><span className='font-medium text-slate-600'>Room occupancy</span><span className='font-bold text-slate-900'>{occupancy}%</span></div><Progress percent={occupancy} showInfo={false} strokeColor='#2563eb' trailColor='#e2e8f0' /></div>
-              <div><div className='mb-2 flex justify-between text-sm'><span className='font-medium text-slate-600'>Verified guests</span><span className='font-bold text-slate-900'>{verification}%</span></div><Progress percent={verification} showInfo={false} strokeColor='#10b981' trailColor='#e2e8f0' /></div>
+              <div><div className='mb-2 flex justify-between text-sm'><span className='font-medium text-slate-600'>Room occupancy</span><span className='font-bold text-slate-900'>{occupancy}%</span></div><Progress percent={occupancy} showInfo={false} strokeColor='#2563eb' railColor='#e2e8f0' /></div>
+              <div><div className='mb-2 flex justify-between text-sm'><span className='font-medium text-slate-600'>Verified guests</span><span className='font-bold text-slate-900'>{verification}%</span></div><Progress percent={verification} showInfo={false} strokeColor='#10b981' railColor='#e2e8f0' /></div>
               <div className='grid grid-cols-2 gap-3 pt-1'>
                 <div className='rounded-xl bg-emerald-50 p-3'><HomeOutlined className='text-emerald-600' /><p className='mb-0 mt-2 text-xl font-bold text-slate-900'>{rooms.available_rooms || 0}</p><p className='m-0 text-xs text-slate-500'>Available rooms</p></div>
                 <div className='rounded-xl bg-rose-50 p-3'><StopOutlined className='text-rose-600' /><p className='mb-0 mt-2 text-xl font-bold text-slate-900'>{rooms.unavailable_rooms || 0}</p><p className='m-0 text-xs text-slate-500'>Unavailable</p></div>

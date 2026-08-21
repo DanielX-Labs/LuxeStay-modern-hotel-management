@@ -1,18 +1,18 @@
 import { Card, Statistic } from 'antd';
 import React from 'react';
 import CountUp from 'react-countup';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const formatter = (value) => <CountUp end={value} separator=',' />;
 const gridStyle = { width: '50%', textAlign: 'center' };
 
 function RoomCard({ loading, data }) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <Card
       className='w-full cursor-pointer md:w-[49.5%]'
-      onClick={() => navigate('/main/hotel-rooms')}
+      onClick={() => router.push('/main/hotel-rooms')}
       title='Rooms Information:'
       loading={loading}
     >

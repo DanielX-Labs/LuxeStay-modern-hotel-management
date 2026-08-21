@@ -2,9 +2,8 @@
 import { ConfigProvider } from 'antd';
 import { DefaultSeo } from 'next-seo';
 import { Provider, useSelector } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
 import SEO from '../next-seo.config';
-import { persistor, store } from '../store';
+import { store } from '../store';
 
 import 'antd/dist/reset.css';
 import '../styles/global.css';
@@ -25,9 +24,7 @@ function LoadApp({ Component, pageProps }) {
 function MyApp({ Component, pageProps }) {
   return (
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <LoadApp Component={Component} pageProps={pageProps} />
-      </PersistGate>
+      <LoadApp Component={Component} pageProps={pageProps} />
     </Provider>
   );
 }

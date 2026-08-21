@@ -1,16 +1,16 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import Avatar from '../../assets/images/avatar.png';
 import { getSessionUser } from '../../utils/authentication';
 
 function UserBox() {
   const user = getSessionUser();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div
       className='logo-box'
-      onClick={() => navigate('/main/profile')}
+      onClick={() => router.push('/main/profile')}
     >
       <img
         className='w-[50px] h-auto rounded-full'

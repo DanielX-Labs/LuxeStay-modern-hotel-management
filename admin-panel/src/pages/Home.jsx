@@ -1,7 +1,7 @@
 import { SmileOutlined } from '@ant-design/icons';
 import { Button, Result } from 'antd';
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 function Home() {
   window.document.title = 'LuxeStay — Home';
@@ -16,7 +16,7 @@ function Home() {
         )}
         icon={<SmileOutlined />}
         extra={(
-          <Link to='/main/dashboard'>
+          <Link href='/main/dashboard'>
             <Button
               type='primary'
               shape='round'

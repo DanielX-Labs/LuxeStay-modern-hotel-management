@@ -1,7 +1,7 @@
 import { LoadingOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { Alert, Button, Divider, Form, Input, Modal } from 'antd';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import ApiService from '../utils/apiService';
 import { setSessionUserAndToken } from '../utils/authentication';
 
@@ -41,7 +41,7 @@ function Login() {
     finally { setLoading(false); }
   };
   return <section className='flex flex-col h-screen items-center justify-center'><div className='w-[90%] md:w-[450px]'>
-    <Link to='/'><img className='w-[220px] h-[65px] object-contain mx-auto' alt='LuxeStay logo' src='/brand/luxestay-logo.svg' /></Link>
+    <Link href='/'><img className='w-[220px] h-[65px] object-contain mx-auto' alt='LuxeStay logo' src='/brand/luxestay-logo.svg' /></Link>
     <Divider className='!mb-10'>ADMIN LOGIN</Divider>{errMsg && <Alert message={errMsg} type={errMsg.includes('sent') ? 'success' : 'error'} className='!text-center !mb-4' />}
     <Form name='luxestay-admin-login' onFinish={onFinish} size='large'>
       <Form.Item name='email' rules={[{ type: 'email', required: true, message: 'Enter your email' }]}><Input prefix={<MailOutlined />} placeholder='Email' /></Form.Item>

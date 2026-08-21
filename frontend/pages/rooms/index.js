@@ -1,12 +1,13 @@
 import { Empty, Result, Skeleton } from 'antd';
-import axios from 'axios';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../../components/layout';
 import RoomFilter from '../../components/rooms/RoomsFilter';
 import RoomList from '../../components/rooms/RoomsList';
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-function Rooms({ rooms, error }) {
+import useLiveRoomData, { fetchRoomData } from '../../hooks/useLiveRoomData';
+function Rooms({ rooms: initialRooms, error: initialError }) {
+  const { data: rooms, error: refreshError } = useLiveRoomData(initialRooms, '/api/v1/all-rooms-list');
+  const error = rooms ? null : refreshError || initialError;
   const [allRooms, setAllRooms] = useState([]); const [filteredRooms, setFilteredRooms] = useState([]);
   useEffect(() => { const rows = rooms?.data?.rows || []; setAllRooms(rows); setFilteredRooms(rows); }, [rooms]);
   return <MainLayout title='Rooms - LuxeStay'><main className='ls-rooms-page'>
@@ -16,5 +17,5 @@ function Rooms({ rooms, error }) {
     </section>
   </main></MainLayout>;
 }
-export async function getServerSideProps(){try{const response=await axios.get(`${API_URL}/api/v1/all-rooms-list`);return{props:{rooms:response?.data?.result,error:null}}}catch(err){return{props:{rooms:null,error:{message:err?.response?.data?.result?.error||err?.message||'Unable to fetch rooms'}}}}}
+export async function getServerSideProps({ res }){res.setHeader('Cache-Control','no-store');try{return{props:{rooms:await fetchRoomData('/api/v1/all-rooms-list'),error:null}}}catch(err){return{props:{rooms:null,error:{message:err?.response?.data?.result?.error||err?.message||'Unable to fetch rooms'}}}}}
 export default Rooms;

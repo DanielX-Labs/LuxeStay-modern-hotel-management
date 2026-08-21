@@ -1,14 +1,18 @@
-import { Navigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { getSessionToken, getSessionUser } from '../../utils/authentication';
 
 function PublicRoute({ children }) {
+  const router = useRouter();
   const user = getSessionUser();
   const token = getSessionToken();
+  const authenticated = Boolean(user && token);
 
-  if (user && token) {
-    return <Navigate to='/dashboard/main' replace />;
-  }
-  return children;
+  useEffect(() => {
+    if (authenticated) router.replace('/main/dashboard');
+  }, [authenticated, router]);
+
+  return authenticated ? null : children;
 }
 
 export default PublicRoute;
