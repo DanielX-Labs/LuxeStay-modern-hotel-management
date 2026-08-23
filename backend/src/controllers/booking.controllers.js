@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const Room = require('../models/room.model');
 const Booking = require('../models/booking.model');
 const { errorResponse, successResponse } = require('../configs/app.response');
-const { generateInvoice } = require('../services/invoice.service');
+const { generateInvoice, createPdf } = require('../services/invoice.service');
 const sendBookingEmail = require('../services/booking.email.service');
 const logger = require('../middleware/winston.logger');
 
@@ -143,7 +143,17 @@ exports.getBookingDetails = async (req, res) => {
   try { const selector = validId(req.params.id) ? { _id: req.params.id } : { booking_id: req.params.id.toUpperCase() }; if (req.user.role !== 'admin') selector.booking_by = req.user.id; const booking = await load(selector); if (!booking) return fail(res, 404, 'Booking not found or access denied.'); return res.status(200).json(successResponse(0, 'SUCCESS', 'Booking retrieved successfully.', serialize(booking))); } catch (error) { return fail(res, 500, error.message); }
 };
 exports.openInvoice = async (req, res) => {
-  const selector = validId(req.params.id) ? { _id: req.params.id } : { booking_id: req.params.id.toUpperCase() }; if (req.user.role !== 'admin') selector.booking_by = req.user.id; const booking = await Booking.findOne(selector); if (!booking || !booking.invoice_url) return fail(res, 404, 'Invoice not found or access denied.'); return res.status(200).json(successResponse(0, 'SUCCESS', 'Invoice access granted.', { url: booking.invoice_url, filename: `${booking.invoice_id}.pdf` }));
+  const selector = validId(req.params.id) ? { _id: req.params.id } : { booking_id: req.params.id.toUpperCase() }; if (req.user.role !== 'admin') selector.booking_by = req.user.id; const booking = await load(selector); if (!booking || !booking.invoice_url) return fail(res, 404, 'Invoice not found or access denied.');
+  if (req.query.format === 'pdf') {
+    const filename = `${booking.invoice_id}.pdf`;
+    const disposition = req.query.download === 'true' ? 'attachment' : 'inline';
+    const pdf = createPdf(booking, booking.booking_by, booking.room_id);
+    res.set({
+      'Content-Type': 'application/pdf', 'Content-Disposition': `${disposition}; filename="${filename}"`, 'Content-Length': pdf.length, 'Cache-Control': 'private, no-store'
+    });
+    return res.status(200).send(pdf);
+  }
+  return res.status(200).json(successResponse(0, 'SUCCESS', 'Invoice access granted.', { url: booking.invoice_url, filename: `${booking.invoice_id}.pdf` }));
 };
 exports.resendInvoice = async (req, res) => {
   try {
@@ -151,7 +161,7 @@ exports.resendInvoice = async (req, res) => {
     if (!booking || !booking.invoice_url) return fail(res, 404, 'Booking invoice not found.');
     res.status(202).json(successResponse(0, 'SUCCESS', `The confirmation and invoice have been queued for ${booking.booking_by.email}.`, null));
     try {
-      await sendBookingEmail(booking, booking.booking_by, booking.room_id);
+      await sendBookingEmail(booking, booking.booking_by, booking.room_id, 'invoice');
       logger.info(`Booking invoice email delivered: ${booking.booking_id}`);
     } catch (error) {
       logger.error(`Booking invoice email delivery failed for ${booking.booking_id}: ${error.code || error.message}`);

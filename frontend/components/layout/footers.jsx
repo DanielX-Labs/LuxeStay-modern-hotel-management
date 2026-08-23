@@ -14,7 +14,7 @@ function Footers() {
           <div><h3>Stay in the know</h3><p>Occasional notes, new rooms, and considered offers.</p><form onSubmit={(event) => event.preventDefault()}><input type='email' aria-label='Email address' placeholder='Email address' /><button type='submit' aria-label='Subscribe'>&rarr;</button></form></div>
         </div>
       </div>
-      <div className='ls-footer-bottom'><span>&copy; {new Date().getFullYear()} LuxeStay</span><span>Luxury, made personal.</span></div>
+      <div className='ls-footer-bottom'><Link href='https://luxe-stay-modern-hotel-management-a-gray.vercel.app' aria-label='LuxeStay home'>&copy; {new Date().getFullYear()} LuxeStay</Link><span>Luxury, made personal.</span></div>
     </footer>
   );
 }

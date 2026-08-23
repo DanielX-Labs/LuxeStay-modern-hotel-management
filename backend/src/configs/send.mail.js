@@ -1,5 +1,6 @@
-const nodemailer = require('nodemailer');
-/* eslint-disable max-len, no-param-reassign, no-use-before-define */
+const { brevoTransporter } = require('./brevo.config');
+const { Env } = require('./env.config');
+/* eslint-disable max-len, no-param-reassign */
 
 const escapeHtml = (value = '') => String(value)
   .replace(/&/g, '&amp;')
@@ -8,124 +9,39 @@ const escapeHtml = (value = '') => String(value)
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#039;');
 
-let transporter;
-
-const sendWithDeadline = (mailOptions) => {
-  const timeoutMs = Number(process.env.SMTP_SEND_TIMEOUT_MS || 15000);
-  let timer;
-  return Promise.race([
-    getTransporter().sendMail(mailOptions),
-    new Promise((_, reject) => {
-      timer = setTimeout(() => {
-        const error = new Error(`Email delivery exceeded ${timeoutMs}ms`);
-        error.code = 'ETIMEDOUT';
-        reject(error);
-      }, timeoutMs);
-    })
-  ]).finally(() => clearTimeout(timer));
-};
-
-const getTransporter = () => {
-  if (transporter) return transporter;
-
-  const port = Number(process.env.BREVO_SMTP_PORT || 587);
-
-  transporter = nodemailer.createTransport({
-    pool: true,
-    maxConnections: 3,
-    maxMessages: 100,
-    host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-    port,
-    secure: port === 465,
-    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 10000),
-    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS || 10000),
-    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 15000),
-    auth: {
-      user: process.env.BREVO_SMTP_LOGIN,
-      pass: process.env.BREVO_SMTP_KEY
-    }
-  });
-
-  return transporter;
-};
-
-// Shared transactional path used by OTPs, booking confirmations and invoices.
-const sendTransactionalEmail = async ({
-  to, subject, text, html
-}) => {
-  const senderName = process.env.BREVO_SENDER_NAME || 'LuxeStay';
-  const senderEmail = process.env.BREVO_SENDER_EMAIL;
-  try {
-    return await sendWithDeadline({
-      from: `"${senderName}" <${senderEmail}>`,
-      to,
-      replyTo: process.env.SUPPORT_EMAIL || senderEmail,
-      subject,
-      text,
-      html
-    });
-  } catch (error) {
-    if (transporter) transporter.close();
-    transporter = undefined;
-    throw error;
-  }
-};
+const sendTransactionalEmail = ({
+  to, subject, text, html, attachments
+}) => brevoTransporter.sendMail({
+  from: `"${Env.BREVO_SENDER_NAME}" <${Env.BREVO_SENDER_EMAIL}>`,
+  to,
+  replyTo: Env.SUPPORT_EMAIL,
+  subject,
+  text,
+  html,
+  attachments
+});
 
 const sendEmail = async (res, user, url, subject, message, title, options = {}) => {
   try {
-    if ((process.env.BREVO_EMAIL_TRANSPORT || 'smtp').toLowerCase() !== 'smtp') {
-      throw new Error('BREVO_EMAIL_TRANSPORT must be set to smtp');
-    }
-
     const safeTitle = escapeHtml(title);
     const safeMessage = escapeHtml(message);
     const safeUrl = escapeHtml(url);
-    const senderName = process.env.BREVO_SENDER_NAME || 'LuxeStay';
-    const senderEmail = process.env.BREVO_SENDER_EMAIL;
-
-    await sendWithDeadline({
-      from: `"${senderName}" <${senderEmail}>`,
+    await sendTransactionalEmail({
       to: user.email,
-      replyTo: process.env.SUPPORT_EMAIL || senderEmail,
       subject,
-      text: options.text || `${title}\n\n${message}\n\n${url}\n\nIf you did not request this email, you can safely ignore it.`,
-      html: options.html || `
-        <div style="background:#f5f5f5;padding:32px 16px;font-family:Arial,sans-serif;color:#222;">
-          <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 4px 18px rgba(0,0,0,.08);">
-            <h1 style="font-size:24px;margin:0 0 16px;">${safeTitle}</h1>
-            <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">${safeMessage}</p>
-            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:8px;">${safeTitle}</a>
-            <p style="font-size:13px;line-height:1.5;color:#6b7280;margin:24px 0 0;">If the button does not work, copy and paste this link into your browser:<br><a href="${safeUrl}" style="color:#2563eb;word-break:break-all;">${safeUrl}</a></p>
-            <p style="font-size:13px;line-height:1.5;color:#6b7280;margin:16px 0 0;">If you did not request this email, you can safely ignore it.</p>
-          </div>
-        </div>
-      `
+      text: options.text || `${title}\n\n${message}\n\n${url}`,
+      html: options.html || `<div style="background:#f5f5f5;padding:32px 16px;font-family:Arial,sans-serif;color:#222"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:32px"><h1>${safeTitle}</h1><p style="line-height:1.6">${safeMessage}</p><a href="${safeUrl}" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:8px">${safeTitle}</a></div></div>`,
+      attachments: options.attachments
     });
-
     if (!options.noResponse && res) {
-      return res.status(200).json({
-        status: 'success',
-        message: `Email sent to ${user.email} successfully`
-      });
+      return res.status(200).json({ status: 'success', message: `Email sent to ${user.email} successfully` });
     }
-
     return undefined;
   } catch (error) {
-    // Discard a failed pooled connection so the next request starts cleanly.
-    if (transporter) transporter.close();
-    transporter = undefined;
     if (user.resetPasswordToken) user.resetPasswordToken = undefined;
     if (user.resetPasswordExpire) user.resetPasswordExpire = undefined;
-
-    await user.save({ validateBeforeSave: false }).catch(() => {});
-
-    if (res && !options.noResponse) {
-      return res.status(500).json({
-        status: 'error',
-        message: error.message || 'Unable to send email'
-      });
-    }
-
+    if (typeof user.save === 'function') await user.save({ validateBeforeSave: false }).catch(() => {});
+    if (res && !options.noResponse) return res.status(500).json({ status: 'error', message: error.message || 'Unable to send email' });
     throw error;
   }
 };
@@ -138,14 +54,15 @@ const sendOtpEmail = async ({ email, code, purpose }) => {
     reset_password: 'Reset your LuxeStay password'
   };
   const subject = labels[purpose] || 'Your LuxeStay verification code';
-  await sendTransactionalEmail({
+  return sendTransactionalEmail({
     to: email,
     subject,
-    text: `${subject}\n\nYour six-digit code is ${code}. It expires in 10 minutes. Never share this code.`,
-    html: `<div style="background:#f5f5f5;padding:32px 16px;font-family:Arial,sans-serif;color:#222"><div style="max-width:560px;margin:auto;background:#fff;border-radius:12px;padding:32px;text-align:center"><h1>${escapeHtml(subject)}</h1><p>Enter this code in LuxeStay. It expires in 10 minutes.</p><div style="display:inline-block;background:#111827;color:#fff;font-size:30px;font-weight:700;letter-spacing:8px;padding:16px 22px;border-radius:8px">${escapeHtml(code)}</div><p style="font-size:13px;color:#6b7280;margin-top:24px">Never share this code. If you did not request it, ignore this email.</p></div></div>`
+    text: `${subject}\n\nYour six-digit verification code is ${code}. It expires in 10 minutes. Never share this code.`,
+    html: `<div style="background:#f2f0eb;padding:36px 16px;font-family:Arial,sans-serif;color:#101828"><div style="max-width:560px;margin:auto;overflow:hidden;border-radius:16px;background:#fff;box-shadow:0 14px 45px rgba(16,24,40,.10)"><div style="padding:30px 34px;background:#071426;color:#fff"><div style="color:#d6b56d;font-size:10px;letter-spacing:2px;text-transform:uppercase">LuxeStay</div><h1 style="margin:13px 0 0;font-family:Georgia,serif;font-size:29px;font-weight:400">${escapeHtml(subject)}</h1></div><div style="padding:32px 34px;text-align:center"><p style="margin:0;color:#5b6573;line-height:1.7">Enter this secure code to continue. It expires in 10 minutes.</p><div style="display:inline-block;margin:25px 0;padding:17px 23px;border-radius:10px;background:#071426;color:#fff;font-size:30px;font-weight:700;letter-spacing:8px">${escapeHtml(code)}</div><p style="margin:0;color:#8a9099;font-size:12px;line-height:1.6">Never share this code. LuxeStay will never ask for it by phone or message.</p></div></div></div>`
   });
 };
+
 module.exports = sendEmail;
 module.exports.sendOtpEmail = sendOtpEmail;
 module.exports.sendTransactionalEmail = sendTransactionalEmail;
-module.exports.verifyEmailTransport = () => getTransporter().verify();
+module.exports.verifyEmailTransport = () => brevoTransporter.verify();

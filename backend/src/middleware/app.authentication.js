@@ -1,7 +1,7 @@
-
 const jwt = require('jsonwebtoken');
 const { errorResponse } = require('../configs/app.response');
 const User = require('../models/user.model');
+const logger = require('./winston.logger');
 
 // TODO: Middleware for detect authenticated logging user
 exports.isAuthenticatedUser = async (req, res, next) => {
@@ -137,6 +137,18 @@ exports.isAdmin = async (req, res, next) => {
 
     // check user status is admin
     if (user.role === 'admin') {
+      if (!req.adminAuditAttached) {
+        req.adminAuditAttached = true;
+        const startedAt = process.hrtime.bigint();
+        res.once('finish', () => {
+          const duration = Number(process.hrtime.bigint() - startedAt) / 1000000;
+          const result = res.statusCode >= 400 ? 'FAILED' : 'SUCCESS';
+          logger.info(
+            `[ADMIN AUDIT] ${result} admin=${user.email} adminId=${user._id} `
+            + `action=${req.method} ${req.originalUrl} status=${res.statusCode} duration=${duration.toFixed(1)}ms`
+          );
+        });
+      }
       next();
     } else {
       return res.status(406).json(errorResponse(

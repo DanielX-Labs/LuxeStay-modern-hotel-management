@@ -22,7 +22,15 @@ function morganLogger() {
   return morgan((tokens, req, res) => {
     const status = colorStatus(tokens.status(req, res));
     const responseTime = tokens['response-time'](req, res);
-    return `${tokens.method(req, res)} ${tokens.url(req, res)} ${status} ${responseTime} ms`;
+    const adminUrl = process.env.ADMIN_URL;
+    const requestOrigin = req.get('origin');
+    const isAdminRequest = req.user?.role === 'admin'
+      || req.query?.loginType === 'admin'
+      || (adminUrl && requestOrigin === adminUrl);
+    const actor = req.user?.role === 'admin' ? ` admin=${req.user.email}` : '';
+    const scope = isAdminRequest ? '[ADMIN REQUEST]' : '[HTTP]';
+
+    return `${scope}${actor} ${tokens.method(req, res)} ${tokens.url(req, res)} ${status} ${responseTime} ms`;
   }, {
     stream: {
       write(message) {

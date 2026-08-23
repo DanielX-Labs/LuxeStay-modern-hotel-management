@@ -7,9 +7,11 @@ const path = require('path');
 const appRoot = require('app-root-path');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
+const fs = require('fs');
 
 // imports application middleware and routes
 const morganLogger = require('../middleware/morgan.logger');
+const connectDatabase = require('../database/connect.mongo.db');
 const defaultController = require('../controllers/default.controller');
 const { notFoundRoute, errorHandler } = require('../middleware/error.handler');
 const { limiter } = require('../middleware/access.limiter');
@@ -33,14 +35,14 @@ app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
+// Attach request logging before rate limiting so rejected admin requests are
+// visible in the backend terminal too.
+app.use(morganLogger());
+
 // limiting middleware to all requests
 app.use(limiter);
 
-// Log every HTTP request in development and production.
-app.use(morganLogger());
-
 // Reuse one cached database connection across serverless invocations.
-const connectDatabase = require('../database/connect.mongo.db');
 app.use(async (_req, _res, next) => {
   try {
     await connectDatabase();
@@ -58,10 +60,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // sets favicon if exists
 const faviconPath = path.join(appRoot.path, 'public', 'favicon.ico');
-const fs = require('fs');
 if (fs.existsSync(faviconPath)) {
   app.use(favicon(faviconPath));
 } else {
+  // eslint-disable-next-line no-console
   console.warn('⚠️  Favicon not found at /public/favicon.ico, skipping favicon setup');
 }
 
@@ -98,14 +100,3 @@ app.use(errorHandler);
 
 // default export ~ app
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-

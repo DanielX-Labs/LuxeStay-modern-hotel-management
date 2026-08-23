@@ -2,40 +2,96 @@ const { sendTransactionalEmail } = require('../configs/send.mail');
 /* eslint-disable max-len */
 
 const escapeHtml = (value = '') => String(value)
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#039;');
 const displayDate = (value) => new Date(value).toLocaleDateString('en-NG', {
-  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'
 });
 const money = (value) => new Intl.NumberFormat('en-NG', {
   style: 'currency', currency: 'NGN', maximumFractionDigits: 0
 }).format(Number(value || 0));
-const label = (value) => String(value || '').replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-const detailRow = (name, value) => `<tr><td style="padding:11px 0;color:#697386;font-size:13px;border-bottom:1px solid #ece8e0">${escapeHtml(name)}</td><td style="padding:11px 0;text-align:right;color:#101828;font-size:13px;font-weight:700;border-bottom:1px solid #ece8e0">${escapeHtml(value)}</td></tr>`;
+const titleCase = (value) => String(value || '').replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+const row = (name, value, strong = false) => `<tr><td style="padding:13px 0;border-bottom:1px solid #ebe7df;color:#6d7480;font-size:13px">${escapeHtml(name)}</td><td style="padding:13px 0;border-bottom:1px solid #ebe7df;color:#0b1729;font-size:${strong ? '16px' : '13px'};font-weight:700;text-align:right">${escapeHtml(value)}</td></tr>`;
+
+const emailShell = ({
+  hotel, preheader, heading, intro, body, footerNote
+}) => `<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8"></head><body style="margin:0;background:#efede8;font-family:Arial,Helvetica,sans-serif;color:#0b1729"><div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(preheader)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#efede8"><tr><td style="padding:42px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:650px;margin:0 auto;overflow:hidden;border-radius:18px;background:#fff;box-shadow:0 18px 50px rgba(11,23,41,.10)"><tr><td style="padding:38px 42px;background:#071426"><p style="margin:0;color:#d4b36b;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase">${escapeHtml(hotel)}</p><h1 style="margin:17px 0 10px;color:#fff;font-family:Georgia,Times,serif;font-size:36px;font-weight:400;line-height:1.12">${escapeHtml(heading)}</h1><p style="max-width:510px;margin:0;color:#cbd2dc;font-size:14px;line-height:1.7">${escapeHtml(intro)}</p></td></tr><tr><td style="padding:38px 42px">${body}</td></tr><tr><td style="padding:21px 42px;background:#071426;color:#98a3b2;font-size:11px;line-height:1.65;text-align:center">${escapeHtml(footerNote)}</td></tr></table></td></tr></table></body></html>`;
 
 const confirmationTemplate = (booking, user, room) => {
   const hotel = process.env.HOTEL_NAME || 'LuxeStay Hotel';
-  const invoiceUrl = booking.invoice_url || process.env.FRONTEND_URL || '';
-  const text = `Dear ${user.fullName},\n\nYour stay at ${hotel} is confirmed. We are delighted to welcome you.\n\nBooking ID: ${booking.booking_id}\nRoom: ${room.room_name} (${room.room_type})\nCheck-in: ${displayDate(booking.check_in)}\nCheck-out: ${displayDate(booking.check_out)}\nNights: ${booking.number_of_nights}\nTotal: ${money(booking.total_amount)}\nPayment: Pending — Pay at Hotel\n\nNo online payment is required. Please present your booking ID when you arrive.\n\nInvoice: ${invoiceUrl}\n\nWarm regards,\nThe ${hotel} Guest Experience Team`;
-  const html = `<!doctype html><html><body style="margin:0;background:#f2f0eb;font-family:Arial,Helvetica,sans-serif;color:#101828"><div style="display:none;max-height:0;overflow:hidden">Your LuxeStay reservation ${escapeHtml(booking.booking_id)} is confirmed.</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f2f0eb"><tr><td style="padding:38px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;margin:auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 14px 45px rgba(16,24,40,.10)"><tr><td style="padding:34px 38px;background:#071426;color:#fff"><div style="color:#d6b56d;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase">${escapeHtml(hotel)}</div><h1 style="margin:15px 0 8px;font-family:Georgia,serif;font-size:34px;font-weight:400;line-height:1.15">Your stay is confirmed.</h1><p style="margin:0;color:#ced5df;font-size:14px;line-height:1.7">Everything is ready for your arrival. We look forward to welcoming you.</p></td></tr><tr><td style="padding:34px 38px"><p style="margin:0 0 16px;font-size:16px;line-height:1.7">Dear <strong>${escapeHtml(user.fullName)}</strong>,</p><p style="margin:0 0 26px;color:#52606f;font-size:14px;line-height:1.75">Thank you for choosing ${escapeHtml(hotel)}. Your reservation has been secured for the dates below. No online payment is required; payment will be made at the hotel when you arrive.</p><div style="padding:17px 20px;border:1px solid #dfd5bf;border-radius:12px;background:#fbf8f1"><span style="display:block;color:#8a6c31;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Booking reference</span><strong style="display:block;margin-top:6px;color:#071426;font-size:23px;letter-spacing:1px">${escapeHtml(booking.booking_id)}</strong></div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:22px">${detailRow('Hotel', hotel)}${detailRow('Room', `${room.room_name} · ${label(room.room_type)}`)}${detailRow('Check-in', displayDate(booking.check_in))}${detailRow('Check-out', displayDate(booking.check_out))}${detailRow('Length of stay', `${booking.number_of_nights} night${booking.number_of_nights === 1 ? '' : 's'}`)}${detailRow('Total amount', money(booking.total_amount))}${detailRow('Booking status', label(booking.booking_status))}${detailRow('Payment status', booking.payment_status === 'paid' ? 'Paid' : 'Payment Pending')}${detailRow('Payment method', 'Pay at Hotel')}</table>${invoiceUrl ? `<div style="padding-top:28px;text-align:center"><a href="${escapeHtml(invoiceUrl)}" style="display:inline-block;padding:14px 24px;border-radius:9px;background:#071426;color:#fff;font-size:13px;font-weight:700;text-decoration:none">View booking invoice</a></div>` : ''}<div style="margin-top:30px;padding:18px;border-radius:10px;background:#f5f7fa;color:#52606f;font-size:12px;line-height:1.65"><strong style="color:#101828">On arrival</strong><br>Present your booking ID at reception. Our team will confirm your reservation and assist with payment and check-in.</div><p style="margin:30px 0 0;color:#52606f;font-size:13px;line-height:1.7">Warm regards,<br><strong style="color:#101828">The ${escapeHtml(hotel)} Guest Experience Team</strong></p></td></tr><tr><td style="padding:20px 38px;background:#071426;color:#9fa9b7;font-size:11px;line-height:1.6;text-align:center">This is a transactional message about your reservation. Please keep your booking ID private.</td></tr></table></td></tr></table></body></html>`;
+  const invoiceUrl = booking.invoice_url || '';
+  const nights = `${booking.number_of_nights} night${booking.number_of_nights === 1 ? '' : 's'}`;
+  const payment = booking.payment_status === 'paid' ? 'Paid' : 'Payment Pending';
+  const text = `Dear ${user.fullName},
+
+It is our pleasure to confirm your upcoming stay at ${hotel}.
+
+Your reservation
+Booking ID: ${booking.booking_id}
+Invoice ID: ${booking.invoice_id || 'Available on your invoice'}
+Room: ${room.room_name} — ${titleCase(room.room_type)}
+Check-in: ${displayDate(booking.check_in)}
+Check-out: ${displayDate(booking.check_out)}
+Length of stay: ${nights}
+Total: ${money(booking.total_amount)}
+Payment method: Pay at Hotel
+Payment status: ${payment}
+
+No online payment is required. On arrival, simply present your booking ID at reception. Our team will confirm your reservation, assist with payment, and make your check-in effortless.
+
+Your invoice: ${invoiceUrl || 'Available in your LuxeStay dashboard'}
+
+We look forward to making your time with us exceptional.
+
+Warmly,
+The ${hotel} Guest Experience Team`;
+
+  const reference = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:26px 0 24px;border:1px solid #ded3bd;border-radius:12px;background:#fbf8f1"><tr><td style="padding:19px 21px"><span style="display:block;color:#876a32;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Your booking reference</span><strong style="display:block;margin-top:7px;color:#071426;font-size:24px;letter-spacing:1px">${escapeHtml(booking.booking_id)}</strong></td><td style="padding:19px 21px;text-align:right"><span style="display:block;color:#876a32;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Invoice</span><strong style="display:block;margin-top:7px;color:#071426;font-size:14px">${escapeHtml(booking.invoice_id || 'Issued')}</strong></td></tr></table>`;
+  const details = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">${row('Hotel', hotel)}${row('Room', `${room.room_name} — ${titleCase(room.room_type)}`)}${row('Check-in', displayDate(booking.check_in))}${row('Check-out', displayDate(booking.check_out))}${row('Length of stay', nights)}${row('Booking status', titleCase(booking.booking_status))}${row('Payment method', 'Pay at Hotel')}${row('Payment status', payment)}${row('Total amount', money(booking.total_amount), true)}</table>`;
+  const invoiceButton = invoiceUrl ? `<div style="padding:30px 0 7px;text-align:center"><a href="${escapeHtml(invoiceUrl)}" target="_blank" style="display:inline-block;padding:15px 28px;border-radius:9px;background:#071426;color:#fff;font-size:13px;font-weight:700;text-decoration:none">View your invoice</a><p style="margin:12px 0 0;color:#8a9099;font-size:11px">Keep this document for your arrival and personal records.</p></div>` : '';
+  const body = `<p style="margin:0;color:#0b1729;font-family:Georgia,Times,serif;font-size:21px;line-height:1.45">Dear ${escapeHtml(user.fullName)},</p><p style="margin:13px 0 0;color:#525d6b;font-size:14px;line-height:1.8">Thank you for choosing ${escapeHtml(hotel)}. Your reservation is secured, and our team is preparing for your arrival. Below is your complete stay and invoice summary.</p>${reference}${details}${invoiceButton}<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:29px;border-radius:11px;background:#f4f6f8"><tr><td style="padding:19px 20px"><strong style="display:block;margin-bottom:7px;color:#0b1729;font-size:13px">A seamless arrival</strong><span style="color:#5c6674;font-size:12px;line-height:1.7">No online payment is required. Present your booking ID at reception, settle your stay at the hotel, and our team will take care of the rest.</span></td></tr></table><p style="margin:30px 0 0;color:#525d6b;font-size:13px;line-height:1.75">We look forward to welcoming you and making every part of your stay feel considered.</p><p style="margin:18px 0 0;color:#525d6b;font-size:13px;line-height:1.7">Warmly,<br><strong style="color:#0b1729">The ${escapeHtml(hotel)} Guest Experience Team</strong></p>`;
+  const html = emailShell({
+    hotel,
+    preheader: `Reservation ${booking.booking_id} is confirmed. Your invoice and arrival details are inside.`,
+    heading: 'Your stay awaits.',
+    intro: 'Your reservation is confirmed. Here is everything you need for an effortless arrival.',
+    body,
+    footerNote: 'This email contains private reservation information. Please keep your booking reference secure.'
+  });
   return { text, html };
 };
 
 const cancellationTemplate = (booking, user, room) => {
   const hotel = process.env.HOTEL_NAME || 'LuxeStay Hotel';
-  const text = `Dear ${user.fullName},\n\nYour reservation ${booking.booking_id} for ${room.room_name} has been cancelled.\nReason: ${booking.cancellation_reason || 'Not provided'}\n\nThe room has been released. Your original invoice remains available in your dashboard.\n\nThe ${hotel} Guest Experience Team`;
-  const html = `<div style="margin:0;padding:36px 16px;background:#f2f0eb;font-family:Arial,sans-serif;color:#101828"><div style="max-width:620px;margin:auto;overflow:hidden;border-radius:16px;background:#fff;box-shadow:0 14px 45px rgba(16,24,40,.10)"><div style="padding:32px 36px;background:#071426;color:#fff"><div style="color:#d6b56d;font-size:11px;letter-spacing:2px;text-transform:uppercase">${escapeHtml(hotel)}</div><h1 style="margin:14px 0 7px;font-family:Georgia,serif;font-size:30px;font-weight:400">Cancellation confirmed</h1><p style="margin:0;color:#ced5df">Your reservation has been updated successfully.</p></div><div style="padding:32px 36px"><p>Dear <strong>${escapeHtml(user.fullName)}</strong>,</p><p style="color:#52606f;line-height:1.7">Booking <strong>${escapeHtml(booking.booking_id)}</strong> for ${escapeHtml(room.room_name)} has been cancelled and the room has been released.</p><div style="margin:22px 0;padding:16px;border-left:4px solid #b78535;background:#fbf8f1"><small style="color:#697386;text-transform:uppercase">Cancellation reason</small><p style="margin:7px 0 0;font-weight:700">${escapeHtml(booking.cancellation_reason || 'Not provided')}</p></div><p style="color:#52606f;line-height:1.7">Your original invoice and booking record will remain available in your LuxeStay dashboard.</p><p style="margin-top:28px">Warm regards,<br><strong>The ${escapeHtml(hotel)} Guest Experience Team</strong></p></div></div></div>`;
-  return { text, html };
+  const reason = booking.cancellation_reason || 'Not provided';
+  const text = `Dear ${user.fullName},
+
+We have completed the cancellation of reservation ${booking.booking_id} for ${room.room_name}.
+
+Cancellation reason: ${reason}
+
+The room has been released for other guests. Your original booking record and invoice remain available in your LuxeStay dashboard for your records.
+
+Should your plans bring you back, it would be our pleasure to welcome you.
+
+Warmly,
+The ${hotel} Guest Experience Team`;
+  const body = `<p style="margin:0;color:#0b1729;font-family:Georgia,Times,serif;font-size:21px">Dear ${escapeHtml(user.fullName)},</p><p style="margin:14px 0;color:#525d6b;font-size:14px;line-height:1.8">Your request has been completed. Reservation <strong style="color:#0b1729">${escapeHtml(booking.booking_id)}</strong> for ${escapeHtml(room.room_name)} is now cancelled, and the room has been released.</p><div style="margin:24px 0;padding:18px 20px;border-left:4px solid #b78a3e;background:#fbf8f1"><span style="color:#876a32;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase">Cancellation reason</span><p style="margin:8px 0 0;color:#0b1729;font-size:14px;font-weight:700">${escapeHtml(reason)}</p></div><p style="color:#525d6b;font-size:13px;line-height:1.75">Your original booking record and invoice will remain safely available in your dashboard. Should your plans bring you back, it would be our pleasure to welcome you.</p><p style="margin:27px 0 0;color:#525d6b;font-size:13px;line-height:1.7">Warmly,<br><strong style="color:#0b1729">The ${escapeHtml(hotel)} Guest Experience Team</strong></p>`;
+  return {
+    text,
+    html: emailShell({
+      hotel, preheader: `Cancellation confirmed for ${booking.booking_id}.`, heading: 'Your cancellation is complete.', intro: 'Your reservation has been updated, and no further action is required.', body, footerNote: 'Your original booking record remains available in your LuxeStay dashboard.'
+    })
+  };
 };
 
 const sendBookingEmail = async (booking, user, room, type = 'confirmation') => {
   const cancelled = type === 'cancellation';
-  const subject = cancelled
-    ? `Cancellation confirmed · ${booking.booking_id}`
-    : `Your LuxeStay reservation is confirmed · ${booking.booking_id}`;
+  const invoiceResend = type === 'invoice';
+  let subject = `Your stay is confirmed — ${booking.booking_id}`;
+  if (cancelled) subject = `Cancellation confirmed — ${booking.booking_id}`;
+  if (invoiceResend) subject = `Your LuxeStay invoice — ${booking.invoice_id || booking.booking_id}`;
   const template = cancelled ? cancellationTemplate(booking, user, room) : confirmationTemplate(booking, user, room);
   return sendTransactionalEmail({ to: user.email, subject, ...template });
 };
