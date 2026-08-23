@@ -25,6 +25,14 @@ function RoomEdit({ roomEditModal, setRoomEditModal }) {
   // set form data from API data
   useEffect(() => {
     if (fetchResponse) {
+      const existingImages = (fetchResponse?.data?.room_images || []).map((image, index) => ({
+        uid: image.public_id || `existing-${index}`,
+        name: `Room image ${index + 1}`,
+        status: 'done',
+        url: image.url,
+        existing: true
+      }));
+      setFileList(existingImages);
       form.setFieldsValue({
         room_name: fetchResponse?.data?.room_name || undefined,
         room_slug: fetchResponse?.data?.room_slug || undefined,
@@ -37,7 +45,7 @@ function RoomEdit({ roomEditModal, setRoomEditModal }) {
         featured_room: fetchResponse?.data?.featured_room || false,
         room_description: fetchResponse?.data?.room_description || undefined,
         extra_facilities: fetchResponse?.data?.extra_facilities || undefined,
-        room_images: fetchResponse?.data?.room_images || undefined
+        room_images: existingImages
       });
     }
   }, [fetchResponse, form]);
@@ -63,8 +71,8 @@ function RoomEdit({ roomEditModal, setRoomEditModal }) {
     for (const facilities of values.extra_facilities) {
       formdata.append('extra_facilities', facilities);
     }
-    for (const images of values.room_images) {
-      formdata.append('room_images', images.originFileObj);
+    for (const image of values.room_images || []) {
+      if (image.originFileObj) formdata.append('room_images', image.originFileObj, image.originFileObj.name);
     }
 
     setLoading(true);
@@ -272,10 +280,7 @@ function RoomEdit({ roomEditModal, setRoomEditModal }) {
             label='Room Images'
             valuePropName='fileList'
             getValueFromEvent={normFile}
-            rules={[{
-              required: true,
-              message: 'Please input your Room Images!'
-            }]}
+            extra='Current images will be kept unless you select replacement images.'
           >
             <Upload
               listType='picture-card'

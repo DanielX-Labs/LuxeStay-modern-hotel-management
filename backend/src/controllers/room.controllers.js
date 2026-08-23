@@ -763,14 +763,6 @@ exports.createRoom = async (req, res) => {
     }
 
     // check `req.files[0]` field exists
-    if (!req.files || !req.files[0]) {
-      return res.status(400).json(errorResponse(
-        1,
-        'FAILED',
-        'Minimum 1 `room_images` field is required'
-      ));
-    }
-
     // check `room_name` already exist in database
     const roomName = await Room.findOne({ room_name });
     if (roomName) {
@@ -1036,18 +1028,21 @@ exports.editRoomByAdmin = async (req, res) => {
       ));
     }
 
-    // Delete old images from Cloudinary
-    for (const img of room.room_images) {
-      if (img.public_id) {
-        await cloudinaryV2.uploader.destroy(img.public_id);
+    let roomImages = room.room_images;
+    if (req.files?.length) {
+      // New uploads replace the existing set. With no uploads, current images
+      // remain untouched so text-only room updates are supported.
+      for (const img of room.room_images) {
+        if (img.public_id) {
+          await cloudinaryV2.uploader.destroy(img.public_id);
+        }
       }
-    }
 
-    // Upload new images to Cloudinary
-    const uploadedImages = req.files.map((file) => ({
-      url: file.path,
-      public_id: file.filename
-    }));
+      roomImages = req.files.map((file) => ({
+        url: file.path,
+        public_id: file.filename
+      }));
+    }
 
     // Update room
     const updatedRoom = await Room.findByIdAndUpdate(
@@ -1064,7 +1059,7 @@ exports.editRoomByAdmin = async (req, res) => {
         featured_room,
         room_description,
         extra_facilities,
-        room_images: uploadedImages,
+        room_images: roomImages,
         updatedAt: Date.now()
       },
       { runValidators: true, new: true }

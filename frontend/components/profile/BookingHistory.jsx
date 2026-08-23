@@ -13,7 +13,21 @@ function BookingHistory() {
   const [cancel, setCancel] = useState({ open: false, id: null, reason: '' });
   const [loading, error, response] = useFetchData(`/api/v1/get-user-booking-orders?limit=10&page=${page}&sort=desc`, refresh);
   const openInvoice = async (record, print = false) => {
-    try { const result = await ApiService.get(`/api/v1/booking/${record.id}/invoice`); const win = window.open(result?.result?.data?.url, '_blank'); if (print && win) win.addEventListener('load', () => win.print()); } catch (err) { notificationWithIcon('error', 'ERROR', err?.response?.data?.result?.error || 'Invoice is unavailable.'); }
+    const win = window.open('', '_blank');
+    if (!win) { notificationWithIcon('error', 'PDF VIEWER BLOCKED', 'Allow pop-ups for this site, then try again.'); return; }
+    try {
+      win.document.title = 'Loading invoice...';
+      const pdf = await ApiService.get(`/api/v1/booking/${record.id}/invoice?format=pdf`, { responseType: 'blob' });
+      const blob = pdf instanceof Blob && pdf.type === 'application/pdf' ? pdf : new Blob([pdf], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      win.location.replace(url);
+      if (print) win.addEventListener('load', () => win.print());
+      setTimeout(() => URL.revokeObjectURL(url), 300000);
+      notificationWithIcon('success', print ? 'INVOICE READY TO PRINT' : 'PDF VIEWER OPENED', print ? `${record.booking_id} is ready to print.` : 'Use the Adobe or browser PDF toolbar to download or print the invoice.');
+    } catch (err) {
+      win.close();
+      notificationWithIcon('error', 'INVOICE UNAVAILABLE', err?.response?.data?.result?.error || 'Invoice is unavailable.');
+    }
   };
   const submitCancellation = async () => {
     if (!cancel.reason.trim()) return notificationWithIcon('error', 'ERROR', 'Select or enter a cancellation reason.');
@@ -28,7 +42,7 @@ function BookingHistory() {
     { title: 'Booking', dataIndex: 'booking_status', render: (value) => <Tag color={bookingStatusAsResponse(value).color}>{bookingStatusAsResponse(value).level}</Tag> },
     { title: 'Payment', dataIndex: 'payment_status', render: (value) => <Tag color={value === 'paid' ? 'green' : 'gold'}>{value === 'paid' ? 'PAID' : 'PAYMENT PENDING'}</Tag> },
     { title: 'Invoice / Actions', render: (_, row) => <Space wrap>
-      <Button icon={<FilePdfOutlined />} disabled={!row.invoice_available} onClick={() => openInvoice(row)}>Invoice</Button>
+      <Button icon={<FilePdfOutlined />} disabled={!row.invoice_available} onClick={() => openInvoice(row)}>Open Invoice PDF</Button>
       <Button disabled={!row.invoice_available} onClick={() => openInvoice(row, true)}>Print</Button>
       {['pending', 'confirmed'].includes(row.booking_status) && <Button danger onClick={() => setCancel({ open: true, id: row.id, reason: '' })}>Cancel Booking</Button>}
     </Space> }
