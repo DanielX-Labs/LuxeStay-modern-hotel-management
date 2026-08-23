@@ -716,7 +716,7 @@ h6 {
 }
 
 .info h6::before {
-  content: 'â€¢';
+  content: '•';
   color: var(--primaryColor);
   font-size: 1.5rem;
 }
@@ -981,7 +981,7 @@ h6 {
 }
 
 .info::after {
-  content: 'â€»';
+  content: '※';
   position: absolute;
   bottom: 1rem;
   right: 2rem;
@@ -1609,7 +1609,7 @@ h6 {
 }
 
 .wide-amenity-option input:checked + .wide-checkbox::after {
-  content: 'âœ“';
+  content: '✓';
   color: white;
   font-size: 0.7rem;
   font-weight: bold;
