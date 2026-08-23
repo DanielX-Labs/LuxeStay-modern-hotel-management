@@ -34,6 +34,7 @@ function Main() {
     try {
       const response = await ApiService.post('/api/v1/auth/logout');
       if (response?.result_code === 0) {
+        notificationWithIcon('success', 'SIGNED OUT', 'Your admin session has been closed securely.');
         removeSessionAndLogoutUser();
       } else {
         notificationWithIcon('error', 'ERROR', 'Sorry! Something went wrong. App server error');

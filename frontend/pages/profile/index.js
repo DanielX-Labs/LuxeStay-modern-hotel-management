@@ -37,7 +37,7 @@ function Profile() {
       <MainLayout title='LuxeStay ― My Profile'>
         <div className='profile-container'>
           <Tabs
-            tabPosition='left'
+            tabPlacement='left'
             activeKey={activeTab}
             onTabClick={handleTabClick}
             size='large'

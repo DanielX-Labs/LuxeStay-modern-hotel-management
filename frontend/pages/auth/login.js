@@ -1,7 +1,9 @@
 import { LockOutlined, MailOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Form, Input, Modal } from 'antd';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import { useRouter } from 'next/router';
+import React, { useEffect, useState } from 'react';
+import ForgotPasswordModal from '../../components/auth/ForgotPasswordModal';
 import MainLayout from '../../components/layout';
 import PublicRoute from '../../components/routes/PublicRoute';
 import ApiService from '../../utils/apiService';
@@ -9,11 +11,16 @@ import { setSessionUserAndToken } from '../../utils/authentication';
 import notificationWithIcon from '../../utils/notification';
 
 function Login() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [verificationToken, setVerificationToken] = useState('');
   const [maskedEmail, setMaskedEmail] = useState('');
   const [code, setCode] = useState('');
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [form] = Form.useForm();
+  useEffect(() => {
+    if (router.isReady && router.query.forgot === '1') setForgotPasswordOpen(true);
+  }, [router.isReady, router.query.forgot]);
   const finishLogin = (response) => {
     const remember = Boolean(form.getFieldValue('remember'));
     setSessionUserAndToken(response?.result?.data, response?.access_token, response?.refresh_token, remember);
@@ -33,7 +40,7 @@ function Login() {
       <Form form={form} onFinish={onFinish} layout='vertical' requiredMark={false} size='large' className='ls-auth-form'>
         <Form.Item name='email' label='Email address' rules={[{ type: 'email', required: true, message: 'Enter a valid email address' }]}><Input prefix={<MailOutlined />} placeholder='you@example.com' autoComplete='email' /></Form.Item>
         <Form.Item name='password' label='Password' rules={[{ required: true, message: 'Enter your password' }]}><Input.Password prefix={<LockOutlined />} placeholder='Your password' autoComplete='current-password' /></Form.Item>
-        <div className='ls-auth-options'><Form.Item name='remember' valuePropName='checked' noStyle><Checkbox>Keep me signed in</Checkbox></Form.Item><Link href='/auth/forgot-password'>Forgot password?</Link></div>
+        <div className='ls-auth-options'><Form.Item name='remember' valuePropName='checked' noStyle><Checkbox>Keep me signed in</Checkbox></Form.Item><button type='button' onClick={() => setForgotPasswordOpen(true)}>Forgot password?</button></div>
         <Button htmlType='submit' className='ls-auth-submit' loading={loading} block>Sign in <span>&rarr;</span></Button>
       </Form>
       <div className='ls-auth-switch'><span>New to LuxeStay?</span><Link href='/auth/registration'>Create your account</Link></div>
@@ -44,6 +51,7 @@ function Login() {
       <Input className='ls-code-input' value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} maxLength={6} inputMode='numeric' placeholder='000000' autoFocus />
       <Button className='ls-auth-submit' onClick={verify} loading={loading} block>Verify and continue</Button><button className='ls-resend-code' type='button' onClick={resend}>Did not receive it? <b>Send a new code</b></button>
     </Modal>
+    <ForgotPasswordModal open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
   </main></MainLayout></PublicRoute>;
 }
 export default Login;

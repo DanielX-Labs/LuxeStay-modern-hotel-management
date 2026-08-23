@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const roomsSchema = new mongoose.Schema({
@@ -62,6 +61,11 @@ const roomsSchema = new mongoose.Schema({
     required: [true, 'Room status filed is required'],
     default: 'available'
   },
+  reservations: [{
+    booking_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Bookings', required: true },
+    check_in: { type: Date, required: true },
+    check_out: { type: Date, required: true }
+  }],
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Users',

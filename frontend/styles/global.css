@@ -1875,7 +1875,7 @@ h6 {
 
 .profile-container {
   width: 100%;
-  height: calc(100vh - 205px);
+  min-height: calc(100vh - 205px);
   padding-top: 20px;
 }
 
@@ -3618,8 +3618,13 @@ body {
   color: #606977;
   font-size: 12px;
 }
-.ls-auth-options a {
+.ls-auth-options a,
+.ls-auth-options button {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #795d2d;
+  cursor: pointer;
   font-weight: 700;
   text-decoration: none;
 }
@@ -3704,6 +3709,35 @@ body {
 }
 .ls-resend-code b {
   color: #795d2d;
+}
+.ls-resend-code:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.ls-forgot-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.ls-forgot-progress span {
+  height: 3px;
+  border-radius: 99px;
+  background: #e4dfd6;
+}
+.ls-forgot-progress span.is-active {
+  background: var(--ls-gold);
+}
+.ls-forgot-modal .ls-auth-form {
+  margin-top: 22px;
+  text-align: left;
+}
+.ls-forgot-modal .ls-auth-submit {
+  margin-top: 8px;
+}
+.ls-success-icon {
+  background: #e7f5ed;
+  color: #238453;
 }
 .ls-stepper {
   display: grid;
@@ -4241,7 +4275,7 @@ body {
 }
 .ls-filter-body {
   display: grid;
-  grid-template-columns: 1.3fr 1fr 0.7fr;
+  grid-template-columns: 1fr 1.3fr 1fr 0.7fr;
   gap: 32px;
   padding: 24px;
 }
@@ -4260,6 +4294,17 @@ body {
   font-size: 11px;
   letter-spacing: 0;
 }
+.ls-filter-group input[type='date'] {
+  width: calc(50% - 4px);
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #e0dbd2;
+  border-radius: 8px;
+  background: #faf9f6;
+  color: var(--ls-ink);
+  font-size: 11px;
+}
+.ls-filter-group input[type='date'] + input[type='date'] { margin-left: 8px; }
 .ls-filter-types > div {
   display: flex;
   gap: 6px;
@@ -5087,6 +5132,67 @@ body {
 .ls-booking-modal .ant-modal-content {
   padding: 28px !important;
   border-radius: 20px !important;
+}
+.ls-booking-modal-intro,
+.ls-pay-at-hotel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 16px;
+}
+.ls-booking-modal-intro > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f4efe5;
+  color: #94743a;
+  font-size: 18px;
+}
+.ls-booking-modal-intro p,
+.ls-pay-at-hotel p { margin: 3px 0 0; color: #727986; font-size: 12px; line-height: 1.5; }
+.ls-stay-range { width: 100%; min-height: 50px; border-radius: 10px !important; }
+.ls-pay-at-hotel {
+  padding: 15px 17px;
+  border: 1px solid #ddd2bd;
+  border-radius: 12px;
+  background: #fbf8f1;
+  color: #80632f;
+}
+.ls-pay-at-hotel > span { font-size: 22px; }
+.ls-pay-at-hotel strong { color: var(--ls-ink); }
+
+.ls-bookings-dashboard { padding: 8px 4px 28px; }
+.ls-bookings-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 26px 28px;
+  border: 1px solid #e5dfd4;
+  border-radius: 18px;
+  background: linear-gradient(125deg, #fff 45%, #f5efe4);
+}
+.ls-bookings-heading h2 { margin: 5px 0; color: var(--ls-ink); font: 400 30px Georgia, serif; }
+.ls-bookings-heading p { margin: 0; color: #727986; font-size: 12px; }
+.ls-booking-count { display: flex; align-items: center; gap: 10px; color: #94743a; }
+.ls-booking-count > span { display: flex; flex-direction: column; color: #777d86; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.ls-booking-count b { color: var(--ls-ink); font: 400 26px Georgia, serif; line-height: 1; }
+.ls-bookings-table .ant-table { overflow: hidden; border: 1px solid #e5dfd4; border-radius: 16px; }
+.ls-bookings-table .ant-table-thead > tr > th { background: #f7f3eb !important; color: #69717d; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.ls-bookings-table .ant-table-tbody > tr > td { padding-top: 18px; padding-bottom: 18px; }
+.ls-booking-id { color: #8b6c31; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+.ls-cancel-warning { display: flex; gap: 12px; margin: 16px 0; padding: 14px; border-radius: 10px; background: #fff4f2; color: #b33a2f; }
+.ls-cancel-warning > span { margin-top: 3px; }
+.ls-cancel-warning p { margin: 0; line-height: 1.55; }
+
+@media (max-width: 1050px) { .ls-filter-body { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) {
+  .ls-filter-body { grid-template-columns: 1fr; }
+  .ls-bookings-heading { align-items: flex-start; flex-direction: column; padding: 21px; }
 }
 .ls-booking-modal .ant-modal-title {
   color: var(--ls-ink);

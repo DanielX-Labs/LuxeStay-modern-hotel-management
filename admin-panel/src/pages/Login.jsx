@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import ApiService from '../utils/apiService';
 import { setSessionUserAndToken } from '../utils/authentication';
+import notificationWithIcon from '../utils/notification';
 
 function Login() {
   window.document.title = 'LuxeStay - Login';
@@ -15,6 +16,7 @@ function Login() {
 
   const finishLogin = (response) => {
     setSessionUserAndToken(response?.result?.data, response?.access_token, response?.refresh_token);
+    notificationWithIcon('success', 'WELCOME BACK', 'Admin authentication completed successfully.');
     window.location.href = '/main/dashboard';
   };
   const onFinish = async (values) => {
@@ -25,19 +27,19 @@ function Login() {
       const data = error?.response?.data;
       if (data?.verification_required) {
         setVerificationToken(data.verification_token); setMaskedEmail(data.email); setCode('');
-      } else setErrMsg(data?.result?.error || 'Unable to sign in');
+      } else { const message = data?.result?.error || 'Unable to sign in'; setErrMsg(message); notificationWithIcon('error', 'SIGN IN FAILED', message); }
     } finally { setLoading(false); }
   };
   const verify = async () => {
     setLoading(true); setErrMsg('');
     try { finishLogin(await ApiService.post('/api/v1/auth/login/verify-email', { verificationToken, code }, { noAuth: true })); }
-    catch (error) { setErrMsg(error?.response?.data?.result?.error || 'Invalid or expired code'); }
+    catch (error) { const message = error?.response?.data?.result?.error || 'Invalid or expired code'; setErrMsg(message); notificationWithIcon('error', 'VERIFICATION FAILED', message); }
     finally { setLoading(false); }
   };
   const resend = async () => {
     setLoading(true);
-    try { await ApiService.post('/api/v1/auth/login/resend-code', { verificationToken }, { noAuth: true }); setErrMsg('A new code was sent.'); }
-    catch (error) { setErrMsg(error?.response?.data?.result?.error || 'Could not resend code'); }
+    try { await ApiService.post('/api/v1/auth/login/resend-code', { verificationToken }, { noAuth: true }); setErrMsg('A new code was sent.'); notificationWithIcon('success', 'CODE SENT', 'A fresh verification code was sent to the admin email.'); }
+    catch (error) { const message = error?.response?.data?.result?.error || 'Could not resend code'; setErrMsg(message); notificationWithIcon('error', 'RESEND FAILED', message); }
     finally { setLoading(false); }
   };
   return <section className='flex flex-col h-screen items-center justify-center'><div className='w-[90%] md:w-[450px]'>

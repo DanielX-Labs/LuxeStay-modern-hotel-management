@@ -31,6 +31,14 @@ export const userStatusAsResponse = (status) => {
 };
 
 export const bookingStatusAsResponse = (status) => {
+  const statuses = {
+    confirmed: { color: 'green', level: 'CONFIRMED' },
+    checked_in: { color: 'cyan', level: 'CHECKED IN' },
+    checked_out: { color: 'purple', level: 'CHECKED OUT' },
+    cancelled: { color: 'volcano', level: 'CANCELLED' },
+    no_show: { color: 'red', level: 'NO SHOW' }
+  };
+  if (statuses[status]) return statuses[status];
   if (status === 'pending') {
     return {
       color: 'blue',

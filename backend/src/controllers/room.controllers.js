@@ -666,6 +666,7 @@
 
 
 const Room = require('../models/room.model');
+const Booking = require('../models/booking.model');
 const logger = require('../middleware/winston.logger');
 const { errorResponse, successResponse } = require('../configs/app.response');
 const MyQueryHelper = require('../configs/api.feature');
@@ -837,8 +838,22 @@ exports.createRoom = async (req, res) => {
 // TODO: Controller for get all rooms list
 exports.getRoomsList = async (req, res) => {
   try {
-    const rooms = await Room.find();
-    const roomQuery = new MyQueryHelper(Room.find(), req.query).search('room_name').sort().paginate();
+    const checkIn = new Date(req.query.check_in || req.query.checkIn);
+    const checkOut = new Date(req.query.check_out || req.query.checkOut);
+    const filter = {};
+    if (!Number.isNaN(checkIn.getTime()) && !Number.isNaN(checkOut.getTime()) && checkOut > checkIn) {
+      const reservedRoomIds = await Booking.distinct('room_id', {
+        booking_status: { $in: ['pending', 'confirmed', 'checked_in', 'approved'] },
+        $or: [
+          { check_in: { $lt: checkOut }, check_out: { $gt: checkIn } },
+          { check_in: { $exists: false }, booking_dates: { $elemMatch: { $gte: checkIn, $lt: checkOut } } }
+        ]
+      });
+      filter._id = { $nin: reservedRoomIds };
+      filter.room_status = { $ne: 'unavailable' };
+    }
+    const rooms = await Room.find(filter);
+    const roomQuery = new MyQueryHelper(Room.find(filter), req.query).search('room_name').sort().paginate();
     const findRooms = await roomQuery.query;
 
     const mappedRooms = findRooms?.map(data => ({

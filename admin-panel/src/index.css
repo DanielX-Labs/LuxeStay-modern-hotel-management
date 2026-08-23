@@ -136,3 +136,30 @@ a {
 }
 
 /* dashboard components style end */
+
+/* booking operations */
+.admin-bookings-page { @apply pb-8; }
+.admin-bookings-hero {
+  @apply flex flex-col gap-5 justify-between mb-4 p-6 bg-bg-white border border-gray-200 shadow-sm md:flex-row md:items-end;
+  border-radius: 14px;
+  background: linear-gradient(125deg, #fff 52%, #eef6ff);
+}
+.admin-bookings-hero span { @apply text-[10px] font-bold uppercase tracking-[.18em] text-color-primary; }
+.admin-bookings-hero h1 { @apply my-1 text-[32px] font-bold text-gray-900; }
+.admin-bookings-hero p { @apply m-0 text-[13px] text-gray-500; }
+.admin-bookings-total { @apply flex items-center gap-3 text-color-primary; }
+.admin-bookings-total > span { @apply text-[24px]; }
+.admin-bookings-total strong { @apply text-[30px] text-gray-900 leading-none; }
+.admin-bookings-total small { @apply max-w-[80px] text-[10px] uppercase tracking-wider text-gray-500; }
+.admin-booking-stats { @apply grid grid-cols-1 gap-3 mb-4 md:grid-cols-3; }
+.admin-booking-stats article { @apply flex items-center gap-4 p-4 bg-bg-white border border-gray-200 shadow-sm; border-radius: 12px; }
+.admin-booking-stats article > span { @apply grid place-items-center w-10 h-10 text-[18px] text-color-primary bg-blue-50; border-radius: 10px; }
+.admin-booking-stats article div { @apply flex flex-col; }
+.admin-booking-stats b { @apply text-[23px] leading-none text-gray-900; }
+.admin-booking-stats article div span { @apply mt-1 text-[10px] uppercase tracking-wide text-gray-500; }
+.admin-bookings-toolbar { @apply mb-4 p-4 bg-bg-white border border-gray-200 shadow-sm; border-radius: 12px; }
+.admin-bookings-table .ant-table { @apply border border-gray-200 shadow-sm; border-radius: 12px; overflow: hidden; }
+.admin-bookings-table .ant-table-thead > tr > th { @apply !bg-gray-50 !text-[10px] uppercase tracking-wide text-gray-500; }
+.admin-bookings-table .ant-table-tbody > tr > td { @apply !py-4; }
+.admin-bookings-table .ant-btn { @apply font-semibold; }
+.admin-booking-id { @apply font-bold text-color-primary whitespace-nowrap; letter-spacing: .03em; }

@@ -68,7 +68,7 @@ const usersSchema = new mongoose.Schema({
   emailVerificationToken: String,
   emailVerificationExpire: Date,
   otpHash: { type: String, select: false },
-  otpPurpose: { type: String, enum: ['verify_email', 'change_email', 'change_password'] },
+  otpPurpose: { type: String, enum: ['verify_email', 'change_email', 'change_password', 'reset_password'] },
   otpExpires: Date,
   otpAttempts: { type: Number, default: 0, select: false },
   otpLastSentAt: Date,

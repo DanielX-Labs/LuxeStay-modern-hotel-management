@@ -27,7 +27,7 @@ export default function AccountSecurity() {
     finally { setLoading(false); }
   };
   return <><Space><Button onClick={() => open('email')}>Change Email</Button><Button onClick={() => open('password')}>Change Password</Button></Space>
-    <Modal title={`Change ${flow}`} open={Boolean(flow)} onCancel={close} footer={null} destroyOnClose>
+    <Modal title={`Change ${flow}`} open={Boolean(flow)} onCancel={close} footer={null} destroyOnHidden>
       <Form form={form} layout='vertical' onFinish={submit}>
         {step === 1 && flow === 'email' && <><Form.Item name='newEmail' label='New email' rules={[{ type: 'email', required: true }]}><Input /></Form.Item><Form.Item name='password' label='Current password' rules={[{ required: true }]}><Input.Password /></Form.Item></>}
         {step === 1 && flow === 'password' && <Form.Item name='oldPassword' label='Current password' rules={[{ required: true }]}><Input.Password /></Form.Item>}

@@ -23,4 +23,12 @@ const apiLimiter = rateLimit({
   handler: createHandler('Too many login attempts. Please try again in one minute.')
 });
 
-module.exports = { limiter, apiLimiter };
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: createHandler('Too many verification requests. Please try again later.')
+});
+
+module.exports = { limiter, apiLimiter, otpLimiter };

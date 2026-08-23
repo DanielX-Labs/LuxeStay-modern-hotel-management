@@ -1,7 +1,7 @@
 
 import { EditOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import {
-  Button, Descriptions, Image, Modal, Result, Skeleton, Tag, Tooltip, Upload
+  Button, Descriptions, Modal, Result, Skeleton, Tag, Tooltip, Upload
 } from 'antd';
 import ImgCrop from 'antd-img-crop';
 import React, { useState } from 'react';
@@ -117,8 +117,8 @@ function MyProfile() {
           >
             <Descriptions.Item label='Avatar' span={3}>
               {response?.data?.avatar ? (
-                <Image
-                  style={{ width: '100px', height: '100px' }}
+                <img
+                  style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover' }}
                   src={response?.data?.avatar}
                   crossOrigin='anonymous'
                   alt='user-image'

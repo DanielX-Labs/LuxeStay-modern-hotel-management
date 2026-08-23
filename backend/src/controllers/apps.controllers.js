@@ -46,11 +46,11 @@ exports.getDashboardData = async (req, res) => {
     // finding all booking data from database specific criteria
     const totalBookings = await Booking.find();
     const pendingBookings = await Booking.find({ booking_status: 'pending' });
-    const cancelBookings = await Booking.find({ booking_status: 'cancel' });
-    const approvedBookings = await Booking.find({ booking_status: 'approved' });
+    const cancelBookings = await Booking.find({ booking_status: { $in: ['cancel', 'cancelled'] } });
+    const approvedBookings = await Booking.find({ booking_status: { $in: ['approved', 'confirmed'] } });
     const rejectedBookings = await Booking.find({ booking_status: 'rejected' });
     const inReviewsBookings = await Booking.find({ booking_status: 'in-reviews' });
-    const completedBookings = await Booking.find({ booking_status: 'completed' });
+    const completedBookings = await Booking.find({ booking_status: { $in: ['completed', 'checked_out'] } });
 
     res.status(200).json(successResponse(
       0,

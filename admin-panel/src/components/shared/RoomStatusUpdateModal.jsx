@@ -4,28 +4,23 @@ import ApiService from '../../utils/apiService';
 import notificationWithIcon from '../../utils/notification';
 
 function RoomStatusUpdateModal({ statusUpdateModal, setStatusUpdateModal, setFetchAgain }) {
-  const [roomStatus, setRoomStatus] = useState([
-    { value: 'approved', label: 'Approved', disabled: false },
-    { value: 'rejected', label: 'Rejected', disabled: false },
-    { value: 'in-reviews', label: 'In Reviews', disabled: true }
-  ]);
+  const [roomStatus, setRoomStatus] = useState([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
-    if (statusUpdateModal?.status === 'approved') {
-      setRoomStatus([
-        { value: 'approved', label: 'Approved', disabled: true },
-        { value: 'rejected', label: 'Rejected', disabled: true },
-        { value: 'in-reviews', label: 'In Reviews', disabled: false }
-      ]);
-    }
+    const options = {
+      pending: [{ value: 'confirmed', label: 'Confirmed' }, { value: 'no_show', label: 'No Show' }],
+      confirmed: [{ value: 'checked_in', label: 'Checked In' }, { value: 'no_show', label: 'No Show' }],
+      checked_in: [{ value: 'checked_out', label: 'Checked Out' }, { value: 'no_show', label: 'No Show' }]
+    };
+    setRoomStatus(options[statusUpdateModal?.status] || []);
   }, [statusUpdateModal]);
 
   // function to handle update room status
   const handleUpdateStatus = () => {
     if (!status) {
-      notificationWithIcon('error', 'ERROR', 'Please select an status first to update room status');
+      notificationWithIcon('error', 'ERROR', 'Please select a booking status.');
     } else {
       setLoading(true);
       ApiService.put(
@@ -51,7 +46,7 @@ function RoomStatusUpdateModal({ statusUpdateModal, setStatusUpdateModal, setFet
 
   return (
     <Modal
-      title='Update Room Status:'
+      title='Update Booking Status'
       open={statusUpdateModal?.open}
       onOk={() => setStatusUpdateModal(
         (prevState) => ({ ...prevState, open: false, status: null })
@@ -81,7 +76,7 @@ function RoomStatusUpdateModal({ statusUpdateModal, setStatusUpdateModal, setFet
     >
       <Select
         className='w-full my-5'
-        placeholder='-- select room status --'
+        placeholder='Select booking status'
         optionFilterProp='children'
         options={roomStatus}
         size='large'

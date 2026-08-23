@@ -3,13 +3,14 @@ exports.validateBookingDates = (array) => {
   if (array.length === 0) return false; // Array should not be empty
 
   const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
   const uniqueDates = new Set(); // Using a Set to track unique dates
 
   // Check if each element is a valid date and in the future, and there are no duplicates
   for (const date of array) {
     const parsedDate = new Date(date);
     // eslint-disable-next-line no-restricted-globals
-    if (isNaN(parsedDate) || parsedDate <= currentDate) return false;
+    if (isNaN(parsedDate) || parsedDate < currentDate) return false;
 
     // Check for duplicates
     if (uniqueDates.has(parsedDate.toISOString())) return false;
