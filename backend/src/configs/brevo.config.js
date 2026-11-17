@@ -9,7 +9,10 @@ const brevoTransporter = nodemailer.createTransport({
   host: Env.BREVO_SMTP_HOST,
   port: Env.BREVO_SMTP_PORT,
   secure: Env.BREVO_SMTP_PORT === 465,
-  requireTLS: Env.BREVO_SMTP_PORT === 587,
+  requireTLS: Env.BREVO_SMTP_PORT !== 465,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
   auth: {
     user: Env.BREVO_SMTP_LOGIN,
     pass: Env.BREVO_SMTP_KEY

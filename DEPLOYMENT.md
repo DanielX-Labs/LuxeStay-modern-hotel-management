@@ -36,6 +36,10 @@ MongoDB Atlas Network Access must allow connections from Render. Use a restricte
 6. Do not create a `PORT` variable; Render injects it automatically.
 7. Deploy and open `https://YOUR-RENDER-SERVICE.onrender.com/health`.
 
+Use `BREVO_SMTP_PORT=2525` on Render's free plan. Render blocks outbound SMTP on ports 25, 465, and 587; Brevo supports port 2525 with STARTTLS. The blueprint uses 2525. For an existing service, update this environment variable in the Render dashboard and redeploy. See [Render free-service limitations](https://render.com/docs/free#other-limitations) and [Brevo SMTP ports](https://help.brevo.com/hc/en-us/articles/10905415650322-Which-SMTP-port-should-I-use-Port-587-465-or-2525).
+
+Guest registration saves the account and redirects to sign in with a success toast. The first sign-in sends a six-digit email verification code; successful verification completes sign-in. Codes expire after 10 minutes, and resends have a 60-second cooldown. If sending fails, the account remains registered and the verification dialog allows another send attempt.
+
 The health endpoint should return a `200` response similar to:
 
 ```json

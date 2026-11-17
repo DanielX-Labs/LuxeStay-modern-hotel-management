@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import MainLayout from '../../components/layout';
 import PublicRoute from '../../components/routes/PublicRoute';
 import ApiService from '../../utils/apiService';
@@ -13,7 +14,32 @@ const steps = [{ title: 'Account', note: 'How we reach you', fields: ['fullName'
 function Registration() {
   const [step, setStep] = useState(0); const [loading, setLoading] = useState(false); const [form] = Form.useForm(); const router = useRouter();
   const next = async () => { try { await form.validateFields(steps[step].fields); setStep((value) => value + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { /* Ant Design displays field errors */ } };
-  const onFinish = async (values) => { setLoading(true); const data = { userName: values.userName, fullName: values.fullName, email: values.email, phone: values.phone, dob: dayjs(values.dob).format('YYYY-MM-DD'), gender: values.gender, address: values.address, password: values.password }; try { const response = await ApiService.post('/api/v1/auth/registration', data); notificationWithIcon('success', 'WELCOME TO LUXESTAY', response?.result?.message || 'Your account was created'); form.resetFields(); router.push('/auth/login'); } catch (error) { notificationWithIcon('error', 'REGISTRATION FAILED', error?.response?.data?.result?.error?.message || error?.response?.data?.result?.error || 'Unable to create your account'); } finally { setLoading(false); } };
+  const onFinish = async (values) => {
+    setLoading(true);
+    const data = {
+      userName: values.userName,
+      fullName: values.fullName,
+      email: values.email,
+      phone: values.phone,
+      dob: dayjs(values.dob).format('YYYY-MM-DD'),
+      gender: values.gender,
+      address: values.address,
+      password: values.password
+    };
+    try {
+      await ApiService.post('/api/v1/auth/registration', data, { noAuth: true });
+      toast.success('Account created successfully', {
+        description: 'Sign in to receive a code and verify your email.',
+        duration: 6000
+      });
+      form.resetFields();
+      router.replace('/auth/login');
+    } catch (error) {
+      notificationWithIcon('error', 'REGISTRATION FAILED', error?.response?.data?.result?.error?.message || error?.response?.data?.result?.error || 'Unable to create your account');
+    } finally {
+      setLoading(false);
+    }
+  };
   return <PublicRoute><MainLayout title='Create account - LuxeStay'><main className='ls-auth-page ls-register-page'>
     <section className='ls-auth-visual ls-auth-register-visual'><div className='ls-auth-visual-shade' /><div className='ls-auth-visual-copy'><span>Join LuxeStay</span><h1>More personal stays begin here.</h1><p>Create one account for simpler booking, organized travel, and thoughtful guest care.</p><ul><li><CheckOutlined /> Manage every reservation</li><li><CheckOutlined /> Faster, secure booking</li><li><CheckOutlined /> Personalized account support</li></ul></div></section>
     <section className='ls-auth-panel'><div className='ls-auth-card ls-register-card'><div className='ls-auth-heading'><span className='ls-auth-kicker'>Create your account</span><h2>{step === 0 ? 'Start with the essentials' : step === 1 ? 'Tell us about yourself' : 'Secure your account'}</h2><p>{step === 0 ? 'Use details you can easily recognize later.' : step === 1 ? 'These details help us personalize your experience.' : 'Choose a strong password you do not use elsewhere.'}</p></div>

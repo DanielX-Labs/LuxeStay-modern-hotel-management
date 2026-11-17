@@ -2,6 +2,7 @@
 import { ConfigProvider } from 'antd';
 import { DefaultSeo } from 'next-seo';
 import { Provider, useSelector } from 'react-redux';
+import { Toaster } from 'sonner';
 import NotificationProvider from '../components/utilities/NotificationProvider';
 import SEO from '../next-seo.config';
 import { store } from '../store';
@@ -17,6 +18,7 @@ function LoadApp({ Component, pageProps }) {
       <DefaultSeo {...SEO} />
       <ConfigProvider theme={{ token: theme }}>
         <NotificationProvider>
+          <Toaster position='top-right' richColors closeButton />
           <Component {...pageProps} />
         </NotificationProvider>
       </ConfigProvider>

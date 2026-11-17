@@ -31,10 +31,24 @@ const readVerificationUser = async (token) => {
   return User.findById(decoded.id).select('+otpHash +otpAttempts');
 };
 const canSendOtp = (user) => !user.otpLastSentAt || Date.now() - user.otpLastSentAt.getTime() >= OTP_RESEND_MS;
+const resendAfterFor = (user) => (user.otpLastSentAt
+  ? Math.max(0, Math.ceil((OTP_RESEND_MS - (Date.now() - user.otpLastSentAt.getTime())) / 1000))
+  : 0);
+const loginVerificationResponse = (res, user, codeSent, message) => res.status(403).json({
+  ...errorResponse(12, 'EMAIL VERIFICATION REQUIRED', message || (codeSent
+    ? 'Enter the six-digit code sent to your email'
+    : 'Please request a new verification code to finish signing in')),
+  verification_required: true,
+  verification_token: verificationTokenFor(user),
+  email: user.email.replace(/(^.).*(@.*$)/, '$1***$2'),
+  code_sent: codeSent,
+  resend_after: resendAfterFor(user)
+});
 const issueOtp = async (user, purpose, destination) => {
   if (!canSendOtp(user)) {
     const error = new Error('Please wait 60 seconds before requesting another code');
     error.statusCode = 429;
+    error.retryAfter = resendAfterFor(user);
     throw error;
   }
   if (purpose === 'reset_password') {
@@ -48,6 +62,8 @@ const issueOtp = async (user, purpose, destination) => {
   } catch (error) {
     clearOtp(user);
     await user.save({ validateBeforeSave: false }).catch(() => {});
+    error.otpDeliveryFailed = true;
+    error.statusCode = 503;
     throw error;
   }
 };
@@ -91,7 +107,7 @@ exports.register = async (req, res) => {
       return res.status(409).json(errorResponse(9, 'ALREADY EXIST', 'Username, email, or phone already exists'));
     }
     const user = await User.create({ userName, fullName, email, phone, password, avatar: req.file?.path || publicAssetUrl('/avatar.png'), gender, dob, address, role: 'user', verified: false });
-    return res.status(201).json(successResponse(0, 'SUCCESS', 'Registration successful. Verify your email on first login.', { email: user.email, role: user.role, verified: false }));
+    return res.status(201).json(successResponse(0, 'SUCCESS', 'Registration successful. Sign in to receive your email verification code.', { email: user.email, role: user.role, verified: false }));
   } catch (error) {
     await deleteAvatarFile(req.file);
     logger.error(`Register error: ${error.message}`);
@@ -127,13 +143,19 @@ exports.loginUser = async (req, res) => {
     if (req.query.loginType === 'admin' && user.role !== 'admin') return res.status(403).json(errorResponse(6, 'UNABLE TO ACCESS', 'Admin access required'));
     if (user.status === 'blocked') return res.status(403).json(errorResponse(6, 'UNABLE TO ACCESS', 'User is blocked'));
     if (!user.verified) {
-      if (canSendOtp(user)) await issueOtp(user, 'verify_email');
-      return res.status(403).json({
-        ...errorResponse(12, 'EMAIL VERIFICATION REQUIRED', 'Enter the six-digit code sent to your email'),
-        verification_required: true,
-        verification_token: verificationTokenFor(user),
-        email: user.email.replace(/(^.).*(@.*$)/, '$1***$2')
-      });
+      let codeSent = Boolean(user.otpHash && user.otpPurpose === 'verify_email'
+        && user.otpExpires > new Date() && user.otpAttempts < OTP_MAX_ATTEMPTS);
+      if (canSendOtp(user)) {
+        try {
+          await issueOtp(user, 'verify_email');
+          codeSent = true;
+        } catch (error) {
+          if (!error.otpDeliveryFailed) throw error;
+          logger.error(`Login verification email failed: ${error.message}`);
+          return loginVerificationResponse(res, user, false, 'Your account is ready, but we could not send your verification code. Please try sending it again.');
+        }
+      }
+      return loginVerificationResponse(res, user, codeSent);
     }
     user.status = 'login';
     user.updatedAt = new Date();
@@ -150,11 +172,20 @@ exports.resendLoginVerificationCode = async (req, res) => {
   try {
     const user = await readVerificationUser(req.body.verificationToken);
     if (!user) return res.status(404).json(errorResponse(4, 'UNKNOWN ACCESS', 'User does not exist'));
+    if (user.status === 'blocked') return res.status(403).json(errorResponse(6, 'UNABLE TO ACCESS', 'User is blocked'));
     if (user.verified) return res.status(400).json(errorResponse(1, 'FAILED', 'Email is already verified'));
     await issueOtp(user, 'verify_email');
-    return res.status(200).json(successResponse(0, 'SUCCESS', 'A new verification code was sent'));
+    return res.status(200).json({
+      ...successResponse(0, 'SUCCESS', 'A new verification code was sent'),
+      resend_after: resendAfterFor(user)
+    });
   } catch (error) {
-    return res.status(error.statusCode || 400).json(errorResponse(1, 'FAILED', error.message));
+    if (error.otpDeliveryFailed) logger.error(`Verification code resend failed: ${error.message}`);
+    return res.status(error.statusCode || 400).json({
+      ...errorResponse(1, 'FAILED', error.otpDeliveryFailed ? 'We could not send your verification code. Please try again shortly.' : error.message),
+      ...(error.otpDeliveryFailed ? { code_sent: false } : {}),
+      resend_after: error.retryAfter || 0
+    });
   }
 };
 
@@ -162,6 +193,7 @@ exports.verifyLoginEmail = async (req, res) => {
   try {
     const user = await readVerificationUser(req.body.verificationToken);
     if (!user) return res.status(404).json(errorResponse(4, 'UNKNOWN ACCESS', 'User does not exist'));
+    if (user.status === 'blocked') return res.status(403).json(errorResponse(6, 'UNABLE TO ACCESS', 'User is blocked'));
     if (await rejectBadOtp(res, user, 'verify_email', req.body.code)) return undefined;
     clearOtp(user);
     user.verified = true;
