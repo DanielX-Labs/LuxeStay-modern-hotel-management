@@ -100,7 +100,7 @@ function Login() {
       <div className='ls-auth-switch'><span>New to LuxeStay?</span><Link href='/auth/registration'>Create your account</Link></div>
       <p className='ls-auth-security'><SafetyCertificateOutlined /> Protected with secure authentication</p>
     </div></section>
-    <Modal className='ls-verify-modal' title={null} open={Boolean(verificationToken)} onCancel={() => setVerificationToken('')} closable={!loading && !resending} maskClosable={!loading && !resending} keyboard={!loading && !resending} footer={null} centered>
+    <Modal className='ls-verify-modal' title={null} open={Boolean(verificationToken)} onCancel={() => setVerificationToken('')} closable={!loading && !resending} mask={{ closable: !loading && !resending }} keyboard={!loading && !resending} footer={null} centered>
       <div className='ls-code-icon'><MailOutlined /></div><span className='ls-auth-kicker'>One final step</span><h2>Verify your email</h2>
       <p>{codeSent ? <>We sent a six-digit code to <strong>{maskedEmail}</strong>. It expires in 10 minutes. Check your inbox and spam folder.</> : <>Your account has been created. Send a verification code to <strong>{maskedEmail}</strong> to finish signing in.</>}</p>
       {verificationError && <Alert type='warning' title={verificationError} showIcon />}
